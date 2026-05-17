@@ -5,16 +5,26 @@ create table teams (
   created_at timestamptz not null default now()
 );
 
--- Players
+-- Players (identity only)
 create table players (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  is_goalie  bool not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- Rosters (team membership + team-specific attributes)
+create table rosters (
   id            uuid primary key default gen_random_uuid(),
   team_id       uuid not null references teams(id) on delete cascade,
-  name          text not null,
-  is_goalie     bool not null default false,
+  player_id     uuid not null references players(id) on delete cascade,
   positions     jsonb not null default '{}',
+  -- positions shape: { "LW": "preferred"|"acceptable"|"refused", ... }
   player_level  smallint check (player_level between 1 and 5),
   is_team_admin bool not null default false,
-  created_at    timestamptz not null default now()
+  is_active     bool not null default true,
+  created_at    timestamptz not null default now(),
+  unique (team_id, player_id)
 );
 
 -- Games
@@ -56,6 +66,7 @@ create table defense_line_slots (
 -- RLS
 alter table teams              enable row level security;
 alter table players            enable row level security;
+alter table rosters            enable row level security;
 alter table games              enable row level security;
 alter table forward_line_slots enable row level security;
 alter table defense_line_slots enable row level security;
@@ -63,6 +74,7 @@ alter table defense_line_slots enable row level security;
 -- Public read
 create policy "public read" on teams              for select using (true);
 create policy "public read" on players            for select using (true);
+create policy "public read" on rosters            for select using (true);
 create policy "public read" on games              for select using (true);
 create policy "public read" on forward_line_slots for select using (true);
 create policy "public read" on defense_line_slots for select using (true);
@@ -70,10 +82,11 @@ create policy "public read" on defense_line_slots for select using (true);
 -- Auth write (captain)
 create policy "auth write" on teams              for all using (auth.role() = 'authenticated');
 create policy "auth write" on players            for all using (auth.role() = 'authenticated');
+create policy "auth write" on rosters            for all using (auth.role() = 'authenticated');
 create policy "auth write" on games              for all using (auth.role() = 'authenticated');
 create policy "auth write" on forward_line_slots for all using (auth.role() = 'authenticated');
 create policy "auth write" on defense_line_slots for all using (auth.role() = 'authenticated');
 
--- Enable Realtime on slot tables (run in Supabase dashboard or via replication settings)
+-- Enable Realtime on slot tables (Supabase dashboard: Database → Replication → Tables)
 -- alter publication supabase_realtime add table forward_line_slots;
 -- alter publication supabase_realtime add table defense_line_slots;

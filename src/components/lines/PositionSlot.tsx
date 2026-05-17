@@ -4,13 +4,13 @@ import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 import { PlayerChip } from './PlayerChip';
 import { SLOT_DRAG_COLORS } from '@/lib/constants';
-import type { Player, SlotRef, Preference } from '@/lib/types';
+import type { RosterPlayer, SlotRef, Preference } from '@/lib/types';
 
 interface PositionSlotProps {
   slotRef: SlotRef;
-  player: Player | null;
+  player: RosterPlayer | null;
   readOnly?: boolean;
-  playersById: Map<string, Player>;
+  playersById: Map<string, RosterPlayer>;
   onRemove?: () => void;
 }
 

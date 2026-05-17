@@ -2,21 +2,48 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Player, Position, Preference } from '@/lib/types';
+import type { RosterPlayer, Position, Preference } from '@/lib/types';
 
 export function usePlayers(teamId: string | null) {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<RosterPlayer[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
     if (!teamId) return;
     const supabase = createClient();
     const { data } = await supabase
-      .from('players')
-      .select('*')
+      .from('rosters')
+      .select(`
+        id,
+        team_id,
+        player_id,
+        positions,
+        player_level,
+        is_team_admin,
+        is_active,
+        players ( id, name, is_goalie )
+      `)
       .eq('team_id', teamId)
-      .order('name');
-    if (data) setPlayers(data);
+      .order('players(name)');
+
+    if (data) {
+      setPlayers(
+        data.map((r) => {
+          const p = r.players as unknown as { id: string; name: string; is_goalie: boolean };
+          return {
+            id: p.id,
+            name: p.name,
+            is_goalie: p.is_goalie,
+            roster_id: r.id,
+            team_id: r.team_id,
+            positions: r.positions,
+            player_level: r.player_level,
+            is_team_admin: r.is_team_admin,
+            is_active: r.is_active,
+          };
+        })
+      );
+    }
     setLoading(false);
   }, [teamId]);
 
@@ -28,26 +55,68 @@ export function usePlayers(teamId: string | null) {
     async (name: string, isGoalie: boolean) => {
       if (!teamId) return;
       const supabase = createClient();
-      const { data } = await supabase
+
+      // Insert player identity row
+      const { data: player } = await supabase
         .from('players')
-        .insert({ team_id: teamId, name, is_goalie: isGoalie })
+        .insert({ name, is_goalie: isGoalie })
         .select()
         .single();
-      if (data) setPlayers((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      if (!player) return;
+
+      // Check if this player has a roster entry elsewhere to copy positions from
+      const { data: existingRoster } = await supabase
+        .from('rosters')
+        .select('positions')
+        .eq('player_id', player.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      // Insert roster entry with copied positions as defaults
+      const { data: roster } = await supabase
+        .from('rosters')
+        .insert({
+          team_id: teamId,
+          player_id: player.id,
+          positions: existingRoster?.positions ?? {},
+        })
+        .select()
+        .single();
+
+      if (roster) {
+        const rosterPlayer: RosterPlayer = {
+          id: player.id,
+          name: player.name,
+          is_goalie: player.is_goalie,
+          roster_id: roster.id,
+          team_id: roster.team_id,
+          positions: roster.positions,
+          player_level: roster.player_level,
+          is_team_admin: roster.is_team_admin,
+          is_active: roster.is_active,
+        };
+        setPlayers((prev) =>
+          [...prev, rosterPlayer].sort((a, b) => a.name.localeCompare(b.name))
+        );
+      }
     },
     [teamId]
   );
 
-  const removePlayer = useCallback(async (playerId: string) => {
+  // Deactivate rather than delete — preserves historical line assignments
+  const deactivatePlayer = useCallback(async (rosterId: string) => {
     const supabase = createClient();
-    await supabase.from('players').delete().eq('id', playerId);
-    setPlayers((prev) => prev.filter((p) => p.id !== playerId));
+    await supabase.from('rosters').update({ is_active: false }).eq('id', rosterId);
+    setPlayers((prev) =>
+      prev.map((p) => (p.roster_id === rosterId ? { ...p, is_active: false } : p))
+    );
   }, []);
 
   const updatePreference = useCallback(
-    async (playerId: string, position: Position, preference: Exclude<Preference, 'unset'> | null) => {
+    async (rosterId: string, position: Position, preference: Exclude<Preference, 'unset'> | null) => {
       const supabase = createClient();
-      const player = players.find((p) => p.id === playerId);
+      const player = players.find((p) => p.roster_id === rosterId);
       if (!player) return;
       const positions = { ...player.positions };
       if (preference === null) {
@@ -55,24 +124,24 @@ export function usePlayers(teamId: string | null) {
       } else {
         positions[position] = preference;
       }
-      await supabase.from('players').update({ positions }).eq('id', playerId);
+      await supabase.from('rosters').update({ positions }).eq('id', rosterId);
       setPlayers((prev) =>
-        prev.map((p) => (p.id === playerId ? { ...p, positions } : p))
+        prev.map((p) => (p.roster_id === rosterId ? { ...p, positions } : p))
       );
     },
     [players]
   );
 
   const updateLevel = useCallback(
-    async (playerId: string, level: 1 | 2 | 3 | 4 | 5 | null) => {
+    async (rosterId: string, level: 1 | 2 | 3 | 4 | 5 | null) => {
       const supabase = createClient();
-      await supabase.from('players').update({ player_level: level }).eq('id', playerId);
+      await supabase.from('rosters').update({ player_level: level }).eq('id', rosterId);
       setPlayers((prev) =>
-        prev.map((p) => (p.id === playerId ? { ...p, player_level: level } : p))
+        prev.map((p) => (p.roster_id === rosterId ? { ...p, player_level: level } : p))
       );
     },
     []
   );
 
-  return { players, loading, addPlayer, removePlayer, updatePreference, updateLevel };
+  return { players, loading, addPlayer, deactivatePlayer, updatePreference, updateLevel };
 }

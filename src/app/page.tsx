@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { LinesBoard } from '@/components/lines/LinesBoard';
-import type { Player, Game, ForwardLineSlot, DefenseLineSlot } from '@/lib/types';
+import type { RosterPlayer, Game, ForwardLineSlot, DefenseLineSlot } from '@/lib/types';
 
 const TEAM_ID = process.env.NEXT_PUBLIC_TEAM_ID!;
 
@@ -20,7 +20,7 @@ function formatGame(game: Game): string {
 
 export default function PublicPage() {
   const [game, setGame] = useState<Game | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<RosterPlayer[]>([]);
   const [forwardSlots, setForwardSlots] = useState<ForwardLineSlot[]>([]);
   const [defenseSlots, setDefenseSlots] = useState<DefenseLineSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,12 +43,15 @@ export default function PublicPage() {
       if (!nextGame) { setLoading(false); return; }
 
       const [{ data: pData }, { data: fData }, { data: dData }] = await Promise.all([
-        supabase.from('players').select('*').eq('team_id', TEAM_ID).order('name'),
+        supabase.from('rosters').select('id, team_id, player_id, positions, player_level, is_team_admin, is_active, players(id, name, is_goalie)').eq('team_id', TEAM_ID).eq('is_active', true).order('players(name)'),
         supabase.from('forward_line_slots').select('*').eq('game_id', nextGame.id).order('line_number'),
         supabase.from('defense_line_slots').select('*').eq('game_id', nextGame.id).order('line_number'),
       ]);
 
-      if (pData) setPlayers(pData);
+      if (pData) setPlayers(pData.map((r) => {
+        const p = r.players as unknown as { id: string; name: string; is_goalie: boolean };
+        return { id: p.id, name: p.name, is_goalie: p.is_goalie, roster_id: r.id, team_id: r.team_id, positions: r.positions, player_level: r.player_level, is_team_admin: r.is_team_admin, is_active: r.is_active };
+      }));
       if (fData) setForwardSlots(fData);
       if (dData) setDefenseSlots(dData);
       setLoading(false);

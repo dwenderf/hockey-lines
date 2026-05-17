@@ -3,7 +3,7 @@
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { FORWARD_POSITIONS, DEFENSE_POSITIONS, PREFERENCE_COLORS } from '@/lib/constants';
-import type { Player, Position, Preference } from '@/lib/types';
+import type { RosterPlayer, Position, Preference } from '@/lib/types';
 
 const CYCLE: (Exclude<Preference, 'unset'> | null)[] = ['preferred', 'acceptable', 'refused', null];
 const LABELS: Record<string, string> = {
@@ -14,7 +14,7 @@ const LABELS: Record<string, string> = {
 };
 
 interface PreferenceEditorProps {
-  player: Player;
+  player: RosterPlayer;
   open: boolean;
   onClose: () => void;
   onUpdate: (position: Position, preference: Exclude<Preference, 'unset'> | null) => void;

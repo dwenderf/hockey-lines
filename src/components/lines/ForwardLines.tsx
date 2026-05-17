@@ -1,11 +1,11 @@
 import { LineRow } from './LineRow';
 import { Button } from '@/components/ui/Button';
-import type { Player, ForwardLineSlot, SlotRef } from '@/lib/types';
+import type { RosterPlayer, ForwardLineSlot, SlotRef } from '@/lib/types';
 import { FORWARD_POSITIONS, POSITION_TO_COLUMN } from '@/lib/constants';
 
 interface ForwardLinesProps {
   slots: ForwardLineSlot[];
-  playersById: Map<string, Player>;
+  playersById: Map<string, RosterPlayer>;
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;

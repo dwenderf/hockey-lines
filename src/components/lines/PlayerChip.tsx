@@ -2,10 +2,10 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import type { Player, SlotRef } from '@/lib/types';
+import type { RosterPlayer, SlotRef } from '@/lib/types';
 
 interface PlayerChipProps {
-  player: Player;
+  player: RosterPlayer;
   fromSlot?: SlotRef;
   readOnly?: boolean;
   onRemove?: () => void;

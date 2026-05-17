@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { RosterPlayer } from './RosterPlayer';
+import { RosterPlayer as RosterPlayerComponent } from './RosterPlayer';
 import { AddPlayerForm } from './AddPlayerForm';
 import { PreferenceEditor } from '@/components/preferences/PreferenceEditor';
-import type { Player, Position, Preference } from '@/lib/types';
+import type { RosterPlayer, Position, Preference } from '@/lib/types';
 
 interface RosterPanelProps {
-  players: Player[];
+  players: RosterPlayer[];
   assignedPlayerIds: Set<string>;
   readOnly?: boolean;
   onAdd?: (name: string, isGoalie: boolean) => void;
-  onRemove?: (playerId: string) => void;
-  onUpdatePreference?: (playerId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
+  onDeactivate?: (rosterId: string) => void;
+  onUpdatePreference?: (rosterId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
 }
 
 export function RosterPanel({
@@ -21,10 +21,10 @@ export function RosterPanel({
   assignedPlayerIds,
   readOnly,
   onAdd,
-  onRemove,
+  onDeactivate,
   onUpdatePreference,
 }: RosterPanelProps) {
-  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
 
   const { setNodeRef, isOver } = useDroppable({
     id: 'roster-dropzone',
@@ -32,8 +32,10 @@ export function RosterPanel({
     disabled: readOnly,
   });
 
-  const skaters = players.filter((p) => !p.is_goalie);
-  const goalies = players.filter((p) => p.is_goalie);
+  const active = players.filter((p) => p.is_active);
+  const inactive = players.filter((p) => !p.is_active);
+  const skaters = active.filter((p) => !p.is_goalie);
+  const goalies = active.filter((p) => p.is_goalie);
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -48,13 +50,13 @@ export function RosterPanel({
         </p>
         <div className="space-y-1.5">
           {skaters.map((p) => (
-            <RosterPlayer
+            <RosterPlayerComponent
               key={p.id}
               player={p}
               isAssigned={assignedPlayerIds.has(p.id)}
               readOnly={readOnly}
               onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
-              onRemove={onRemove ? () => onRemove(p.id) : undefined}
+              onDeactivate={onDeactivate ? () => onDeactivate(p.roster_id) : undefined}
             />
           ))}
           {skaters.length === 0 && (
@@ -69,12 +71,30 @@ export function RosterPanel({
             </p>
             <div className="space-y-1.5">
               {goalies.map((p) => (
-                <RosterPlayer
+                <RosterPlayerComponent
                   key={p.id}
                   player={p}
                   isAssigned={assignedPlayerIds.has(p.id)}
                   readOnly={readOnly}
-                  onRemove={onRemove ? () => onRemove(p.id) : undefined}
+                  onDeactivate={onDeactivate ? () => onDeactivate(p.roster_id) : undefined}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {inactive.length > 0 && (
+          <>
+            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Inactive ({inactive.length})
+            </p>
+            <div className="space-y-1.5">
+              {inactive.map((p) => (
+                <RosterPlayerComponent
+                  key={p.id}
+                  player={p}
+                  isAssigned={false}
+                  readOnly={readOnly}
                 />
               ))}
             </div>
@@ -95,7 +115,7 @@ export function RosterPanel({
           open={true}
           onClose={() => setEditingPlayer(null)}
           onUpdate={(pos, pref) => {
-            onUpdatePreference(editingPlayer.id, pos, pref);
+            onUpdatePreference(editingPlayer.roster_id, pos, pref);
             setEditingPlayer((prev) =>
               prev
                 ? {

@@ -1,5 +1,5 @@
 import { PositionSlot } from './PositionSlot';
-import type { Player, Position, SlotRef } from '@/lib/types';
+import type { RosterPlayer, Position, SlotRef } from '@/lib/types';
 
 interface SlotDef {
   position: Position;
@@ -12,7 +12,7 @@ interface SlotDef {
 interface LineRowProps {
   lineNumber: number;
   slots: SlotDef[];
-  playersById: Map<string, Player>;
+  playersById: Map<string, RosterPlayer>;
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
 }

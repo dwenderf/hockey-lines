@@ -1,11 +1,11 @@
 import { ForwardLines } from './ForwardLines';
 import { DefenseLines } from './DefenseLines';
-import type { Player, ForwardLineSlot, DefenseLineSlot, SlotRef } from '@/lib/types';
+import type { RosterPlayer, ForwardLineSlot, DefenseLineSlot, SlotRef } from '@/lib/types';
 
 interface LinesBoardProps {
   forwardSlots: ForwardLineSlot[];
   defenseSlots: DefenseLineSlot[];
-  players: Player[];
+  players: RosterPlayer[];
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddForwardLine?: () => void;

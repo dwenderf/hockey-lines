@@ -1,10 +1,10 @@
 import { LineRow } from './LineRow';
-import type { Player, DefenseLineSlot, SlotRef } from '@/lib/types';
+import type { RosterPlayer, DefenseLineSlot, SlotRef } from '@/lib/types';
 import { DEFENSE_POSITIONS, POSITION_TO_COLUMN } from '@/lib/constants';
 
 interface DefenseLinesProps {
   slots: DefenseLineSlot[];
-  playersById: Map<string, Player>;
+  playersById: Map<string, RosterPlayer>;
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;

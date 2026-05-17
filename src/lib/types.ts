@@ -6,14 +6,32 @@ export interface Team {
   name: string;
 }
 
+// Identity only — name and goalie flag
 export interface Player {
   id: string;
-  team_id: string;
   name: string;
   is_goalie: boolean;
+}
+
+// Team-specific attributes for a player
+export interface RosterEntry {
+  id: string;
+  team_id: string;
+  player_id: string;
+  positions: Partial<Record<Position, Exclude<Preference, 'unset'>>>;
+  player_level: 1 | 2 | 3 | 4 | 5 | null;  // captain-only; never render on public view
+  is_team_admin: boolean;
+  is_active: boolean;
+}
+
+// Flattened view used throughout the UI (player joined with their roster entry)
+export interface RosterPlayer extends Player {
+  roster_id: string;
+  team_id: string;
   positions: Partial<Record<Position, Exclude<Preference, 'unset'>>>;
   player_level: 1 | 2 | 3 | 4 | 5 | null;
   is_team_admin: boolean;
+  is_active: boolean;
 }
 
 export interface Game {

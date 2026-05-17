@@ -30,7 +30,7 @@ const TEAM_ID = process.env.NEXT_PUBLIC_TEAM_ID!;
 
 export default function ManagePage() {
   const { games, selectedGameId, setSelectedGameId, addGame } = useGames(TEAM_ID);
-  const { players, addPlayer, removePlayer, updatePreference, updateLevel } = usePlayers(TEAM_ID);
+  const { players, addPlayer, deactivatePlayer, updatePreference, updateLevel } = usePlayers(TEAM_ID);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(selectedGameId);
 
@@ -191,7 +191,7 @@ export default function ManagePage() {
                   players={players}
                   assignedPlayerIds={assignedPlayerIds}
                   onAdd={addPlayer}
-                  onRemove={removePlayer}
+                  onDeactivate={deactivatePlayer}
                   onUpdatePreference={updatePreference}
                 />
               </div>
