@@ -32,13 +32,14 @@ create table rosters (
 
 -- Games
 create table games (
-  id         uuid primary key default gen_random_uuid(),
-  team_id    uuid not null references teams(id) on delete cascade,
-  opponent   text not null,
-  is_home    bool not null,
-  starts_at  timestamptz not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  id           uuid primary key default gen_random_uuid(),
+  team_id      uuid not null references teams(id) on delete cascade,
+  opponent     text not null,
+  is_home      bool not null,
+  starts_at    timestamptz not null,
+  is_published bool not null default false,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
 );
 
 -- Forward line slots (LW, C, RW)
