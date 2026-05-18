@@ -36,6 +36,12 @@ export function PlayerSearch({ teamId, onAdd }: PlayerSearchProps) {
 
   useEffect(() => {
     loadData();
+    const supabase = createClient();
+    const channel = supabase
+      .channel('players-search')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, loadData)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
   const filtered = query.trim()
