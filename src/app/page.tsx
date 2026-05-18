@@ -27,6 +27,8 @@ export default function PublicPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    let forwardChannel: ReturnType<typeof supabase.channel> | null = null;
+    let defenseChannel: ReturnType<typeof supabase.channel> | null = null;
 
     const init = async () => {
       const now = new Date().toISOString();
@@ -56,7 +58,7 @@ export default function PublicPage() {
       if (dData) setDefenseSlots(dData);
       setLoading(false);
 
-      supabase
+      forwardChannel = supabase
         .channel(`public-forward-${nextGame.id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'forward_line_slots', filter: `game_id=eq.${nextGame.id}` }, (payload) => {
           if (payload.eventType === 'UPDATE') {
@@ -67,7 +69,7 @@ export default function PublicPage() {
         })
         .subscribe();
 
-      supabase
+      defenseChannel = supabase
         .channel(`public-defense-${nextGame.id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'defense_line_slots', filter: `game_id=eq.${nextGame.id}` }, (payload) => {
           if (payload.eventType === 'UPDATE') {
@@ -80,6 +82,11 @@ export default function PublicPage() {
     };
 
     init();
+
+    return () => {
+      forwardChannel?.unsubscribe();
+      defenseChannel?.unsubscribe();
+    };
   }, []);
 
   if (loading) {
