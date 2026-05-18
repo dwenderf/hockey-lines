@@ -9,7 +9,7 @@ interface PositionBadgeProps {
 export function PositionBadge({ position, preference }: PositionBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${PREFERENCE_COLORS[preference]}`}
+      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-xs font-medium ${PREFERENCE_COLORS[preference]}`}
     >
       {position}
     </span>

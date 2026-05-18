@@ -64,7 +64,7 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit }:
 
       {/* Positions row — always shown for active, non-absent skaters */}
       {showPositions && (
-        <div className="mt-1 flex items-center gap-1 overflow-hidden">
+        <div className="mt-1 flex items-center gap-1">
           {positions.map((pos) => (
             <PositionBadge
               key={pos}

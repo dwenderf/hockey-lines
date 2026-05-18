@@ -42,7 +42,7 @@ export function RosterPanel({
   const { setNodeRef, isOver } = useDroppable({
     id: 'roster-dropzone',
     data: { type: 'roster' },
-    disabled: readOnly,
+    disabled: readOnly || draggingInactive || draggingAbsent,
   });
 
   const { setNodeRef: setInactiveRef, isOver: isOverInactive } = useDroppable({
@@ -73,7 +73,7 @@ export function RosterPanel({
     <div className="flex flex-col gap-4 h-full">
       <div
         ref={setNodeRef}
-        className={`flex-1 overflow-y-auto rounded-lg border-2 p-3 transition-colors ${
+        className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-lg border-2 p-3 transition-colors ${
           isOver ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
         }`}
       >
