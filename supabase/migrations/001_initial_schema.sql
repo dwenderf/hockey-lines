@@ -163,11 +163,12 @@ create policy "auth write" on leagues
 -- system_admins: NO client write policy — rows inserted via SQL editor only.
 
 -- ============================================================
--- Enable Realtime on slot tables
+-- Enable Realtime on slot tables and players
 -- Run in Supabase dashboard: Database → Replication → Tables
 -- or uncomment and run:
 -- alter publication supabase_realtime add table forward_line_slots;
 -- alter publication supabase_realtime add table defense_line_slots;
+-- alter publication supabase_realtime add table players;
 -- ============================================================
 
 -- ============================================================
