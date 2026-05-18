@@ -1,0 +1,79 @@
+'use client';
+
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { FORWARD_POSITIONS, DEFENSE_POSITIONS } from '@/lib/constants';
+import { PositionBadge } from '@/components/preferences/PositionBadge';
+import type { RosterPlayer } from '@/lib/types';
+
+interface RosterPlayerProps {
+  player: RosterPlayer;
+  isAssigned: boolean;
+  isAbsent?: boolean;
+  readOnly?: boolean;
+  onEdit?: () => void;
+}
+
+export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit }: RosterPlayerProps) {
+  const inactive = !player.is_active;
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `roster-${player.id}`,
+    data: { type: 'roster-player', playerId: player.id },
+    disabled: isAssigned || readOnly,
+  });
+
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+
+  const positions = [...FORWARD_POSITIONS, ...DEFENSE_POSITIONS];
+  const showPositions = !player.is_goalie && !inactive && !isAbsent;
+
+  const handleClick = () => {
+    if (!readOnly && !inactive && !isAbsent && onEdit) {
+      onEdit();
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={handleClick}
+      className={`flex flex-col rounded-lg border p-2 text-sm transition-opacity ${
+        inactive
+          ? 'opacity-50 bg-gray-50 border-gray-200 cursor-grab active:cursor-grabbing'
+          : isAbsent
+          ? 'opacity-60 bg-amber-50 border-amber-200 cursor-grab active:cursor-grabbing'
+          : isAssigned
+          ? 'opacity-40 bg-white border-gray-200'
+          : 'cursor-grab active:cursor-grabbing bg-white hover:bg-gray-50 border-gray-200'
+      } ${isDragging ? 'opacity-30 shadow-lg' : ''} ${showPositions && onEdit && !readOnly ? 'cursor-pointer' : ''}`}
+      {...(!isAssigned && !readOnly ? { ...listeners, ...attributes } : {})}
+    >
+      {/* Name row */}
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className={`font-medium truncate flex-1 ${inactive ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+          {player.name}
+        </span>
+        {player.is_goalie && (
+          <span className="shrink-0 rounded bg-yellow-100 px-1 text-xs text-yellow-700">G</span>
+        )}
+        {inactive && (
+          <span className="shrink-0 rounded bg-gray-100 px-1 text-xs text-gray-400">Inactive</span>
+        )}
+      </div>
+
+      {/* Positions row — always shown for active, non-absent skaters */}
+      {showPositions && (
+        <div className="mt-1 flex items-center gap-1">
+          {positions.map((pos) => (
+            <PositionBadge
+              key={pos}
+              position={pos}
+              preference={player.positions[pos] ?? 'unset'}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
