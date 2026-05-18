@@ -34,6 +34,12 @@ export interface RosterPlayer extends Player {
   is_active: boolean;
 }
 
+export interface GameAbsence {
+  id: string;
+  game_id: string;
+  player_id: string;
+}
+
 export interface Game {
   id: string;
   team_id: string;

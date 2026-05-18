@@ -18,6 +18,7 @@ import { useGames } from '@/hooks/useGames';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useForwardSlots } from '@/hooks/useForwardSlots';
 import { useDefenseSlots } from '@/hooks/useDefenseSlots';
+import { useGameAbsences } from '@/hooks/useGameAbsences';
 import { DragStateContext } from '@/hooks/useDragState';
 import { LinesBoard } from '@/components/lines/LinesBoard';
 import { RosterPanel } from '@/components/roster/RosterPanel';
@@ -31,6 +32,7 @@ export default function ManagePage() {
   const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
   const { games, selectedGameId, setSelectedGameId, addGame } = useGames(selectedTeamId);
   const { players, addPlayer, addExistingPlayer, deactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
+  const { absentPlayerIds, markAbsent, markAvailable } = useGameAbsences(selectedGameId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(selectedGameId);
 
@@ -218,10 +220,13 @@ export default function ManagePage() {
                 <RosterPanel
                   players={players}
                   assignedPlayerIds={assignedPlayerIds}
+                  absentPlayerIds={absentPlayerIds}
                   teamId={selectedTeamId ?? undefined}
                   onAdd={addPlayer}
                   onAddExisting={addExistingPlayer}
                   onDeactivate={deactivatePlayer}
+                  onMarkAbsent={markAbsent}
+                  onMarkAvailable={markAvailable}
                   onUpdatePreference={updatePreference}
                 />
               </div>

@@ -66,6 +66,16 @@ create table defense_line_slots (
   unique (game_id, line_number)
 );
 
+-- Game absences (player out for a single game, not the whole season)
+create table game_absences (
+  id         uuid primary key default gen_random_uuid(),
+  game_id    uuid not null references games(id) on delete cascade,
+  player_id  uuid not null references players(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (game_id, player_id)
+);
+
 -- Leagues (scaffold only — no league_id FK on teams yet, added in v2 when NYCPHA onboards)
 create table leagues (
   id         uuid primary key default gen_random_uuid(),
@@ -92,6 +102,7 @@ alter table rosters            enable row level security;
 alter table games              enable row level security;
 alter table forward_line_slots enable row level security;
 alter table defense_line_slots enable row level security;
+alter table game_absences      enable row level security;
 alter table leagues            enable row level security;
 alter table system_admins      enable row level security;
 
@@ -102,6 +113,7 @@ create policy "public read" on rosters            for select using (true);
 create policy "public read" on games              for select using (true);
 create policy "public read" on forward_line_slots for select using (true);
 create policy "public read" on defense_line_slots for select using (true);
+create policy "public read" on game_absences      for select using (true);
 create policy "public read" on leagues            for select using (true);
 
 -- System admin self-read only (no one can see others' system_admin rows)
@@ -152,6 +164,15 @@ create policy "owner write" on defense_line_slots
     )
   );
 
+create policy "owner write" on game_absences
+  for all using (
+    exists (
+      select 1 from games g
+      where g.id = game_id
+      and is_team_owner(g.team_id)
+    )
+  );
+
 -- Players: any authenticated user can write (shared identity across teams; tighten in v2)
 create policy "auth write" on players
   for all using (auth.role() = 'authenticated');
@@ -169,6 +190,7 @@ create policy "auth write" on leagues
 -- alter publication supabase_realtime add table forward_line_slots;
 -- alter publication supabase_realtime add table defense_line_slots;
 -- alter publication supabase_realtime add table players;
+-- alter publication supabase_realtime add table game_absences;
 -- ============================================================
 
 -- ============================================================

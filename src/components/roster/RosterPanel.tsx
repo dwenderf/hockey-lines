@@ -11,22 +11,28 @@ import type { RosterPlayer, Position, Preference } from '@/lib/types';
 interface RosterPanelProps {
   players: RosterPlayer[];
   assignedPlayerIds: Set<string>;
+  absentPlayerIds?: Set<string>;
   teamId?: string;
   readOnly?: boolean;
   onAdd?: (name: string, isGoalie: boolean) => void;
   onAddExisting?: (playerId: string) => void;
   onDeactivate?: (rosterId: string) => void;
+  onMarkAbsent?: (playerId: string) => void;
+  onMarkAvailable?: (playerId: string) => void;
   onUpdatePreference?: (rosterId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
 }
 
 export function RosterPanel({
   players,
   assignedPlayerIds,
+  absentPlayerIds,
   teamId,
   readOnly,
   onAdd,
   onAddExisting,
   onDeactivate,
+  onMarkAbsent,
+  onMarkAvailable,
   onUpdatePreference,
 }: RosterPanelProps) {
   const [addMode, setAddMode] = useState<'search' | 'new'>('search');
@@ -40,8 +46,9 @@ export function RosterPanel({
 
   const active = players.filter((p) => p.is_active);
   const inactive = players.filter((p) => !p.is_active);
-  const skaters = active.filter((p) => !p.is_goalie);
-  const goalies = active.filter((p) => p.is_goalie);
+  const outThisGame = absentPlayerIds ? active.filter((p) => absentPlayerIds.has(p.id)) : [];
+  const skaters = active.filter((p) => !p.is_goalie && !absentPlayerIds?.has(p.id));
+  const goalies = active.filter((p) => p.is_goalie && !absentPlayerIds?.has(p.id));
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -62,6 +69,7 @@ export function RosterPanel({
               isAssigned={assignedPlayerIds.has(p.id)}
               readOnly={readOnly}
               onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
+              onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
               onDeactivate={onDeactivate ? () => onDeactivate(p.roster_id) : undefined}
             />
           ))}
@@ -82,7 +90,28 @@ export function RosterPanel({
                   player={p}
                   isAssigned={assignedPlayerIds.has(p.id)}
                   readOnly={readOnly}
+                  onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
                   onDeactivate={onDeactivate ? () => onDeactivate(p.roster_id) : undefined}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {outThisGame.length > 0 && (
+          <>
+            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-amber-500">
+              Out this game ({outThisGame.length})
+            </p>
+            <div className="space-y-1.5">
+              {outThisGame.map((p) => (
+                <RosterPlayerComponent
+                  key={p.id}
+                  player={p}
+                  isAssigned={false}
+                  isAbsent
+                  readOnly={readOnly}
+                  onMarkAvailable={onMarkAvailable ? () => onMarkAvailable(p.id) : undefined}
                 />
               ))}
             </div>
