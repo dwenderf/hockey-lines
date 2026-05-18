@@ -46,6 +46,7 @@ export interface Game {
   opponent: string;
   is_home: boolean;
   starts_at: string;
+  is_published: boolean;
 }
 
 export interface ForwardLineSlot {

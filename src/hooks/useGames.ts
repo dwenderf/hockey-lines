@@ -59,5 +59,17 @@ export function useGames(teamId: string | null) {
     [teamId]
   );
 
-  return { games, selectedGameId, setSelectedGameId, loading, addGame };
+  const publishGame = useCallback(async (gameId: string) => {
+    const supabase = createClient();
+    await supabase.from('games').update({ is_published: true }).eq('id', gameId);
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, is_published: true } : g));
+  }, []);
+
+  const unpublishGame = useCallback(async (gameId: string) => {
+    const supabase = createClient();
+    await supabase.from('games').update({ is_published: false }).eq('id', gameId);
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, is_published: false } : g));
+  }, []);
+
+  return { games, selectedGameId, setSelectedGameId, loading, addGame, publishGame, unpublishGame };
 }

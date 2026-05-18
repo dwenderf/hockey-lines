@@ -30,7 +30,7 @@ import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
 
 export default function ManagePage() {
   const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
-  const { games, selectedGameId, setSelectedGameId, addGame } = useGames(selectedTeamId);
+  const { games, selectedGameId, setSelectedGameId, addGame, publishGame, unpublishGame } = useGames(selectedTeamId);
   const { players, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
   const { absentPlayerIds, markAbsent, markAvailable } = useGameAbsences(selectedGameId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
@@ -38,6 +38,16 @@ export default function ManagePage() {
 
   const [activeDragPlayerId, setActiveDragPlayerId] = useState<string | null>(null);
   const [showAddGame, setShowAddGame] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
+
+  const copyGameLink = () => {
+    if (!selectedGameId) return;
+    navigator.clipboard.writeText(`${window.location.origin}/game/${selectedGameId}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -237,9 +247,22 @@ export default function ManagePage() {
                 </Button>
               </div>
               <div className="flex items-center gap-3">
-                <a href="/" target="_blank" className="text-xs text-blue-500 hover:underline">
-                  Public view ↗
-                </a>
+                {selectedGame && (
+                  selectedGame.is_published ? (
+                    <>
+                      <Button variant="secondary" onClick={copyGameLink}>
+                        {copied ? 'Copied!' : 'Copy link'}
+                      </Button>
+                      <Button variant="ghost" onClick={() => unpublishGame(selectedGame.id)}>
+                        Unpublish
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="secondary" onClick={() => publishGame(selectedGame.id)}>
+                      Publish
+                    </Button>
+                  )
+                )}
                 <Button variant="ghost" onClick={handleLogout}>
                   Logout
                 </Button>
