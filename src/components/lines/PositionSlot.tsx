@@ -26,8 +26,10 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove 
   let dragColorClass = '';
   if (activeDragPlayerId && !readOnly && !isOver) {
     const activePlayer = playersById.get(activeDragPlayerId);
-    const pref: Preference = activePlayer?.positions[slotRef.position] ?? 'unset';
-    dragColorClass = SLOT_DRAG_COLORS[pref];
+    if (activePlayer?.is_active) {
+      const pref: Preference = activePlayer.positions[slotRef.position] ?? 'unset';
+      dragColorClass = SLOT_DRAG_COLORS[pref];
+    }
   }
 
   return (

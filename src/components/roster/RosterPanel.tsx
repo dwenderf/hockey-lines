@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { useDragState } from '@/hooks/useDragState';
 
 import { RosterPlayer as RosterPlayerComponent } from './RosterPlayer';
 import { AddPlayerForm } from './AddPlayerForm';
@@ -37,6 +38,11 @@ export function RosterPanel({
   const [addMode, setAddMode] = useState<'search' | 'new'>('search');
   const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
 
+  const { activeDragPlayerId } = useDragState();
+  const activeDragPlayer = activeDragPlayerId ? players.find((p) => p.id === activeDragPlayerId) : null;
+  const draggingInactive = activeDragPlayer ? !activeDragPlayer.is_active : false;
+  const draggingAbsent = activeDragPlayerId ? absentPlayerIds?.has(activeDragPlayerId) ?? false : false;
+
   const { setNodeRef, isOver } = useDroppable({
     id: 'roster-dropzone',
     data: { type: 'roster' },
@@ -58,7 +64,7 @@ export function RosterPanel({
   const { setNodeRef: setOutRef, isOver: isOverOut } = useDroppable({
     id: 'out-this-game',
     data: { type: 'out-this-game' },
-    disabled: readOnly || absentPlayerIds === undefined,
+    disabled: readOnly || absentPlayerIds === undefined || draggingInactive || draggingAbsent,
   });
 
   const active = players.filter((p) => p.is_active);
@@ -81,7 +87,7 @@ export function RosterPanel({
             isOverSkaters ? 'border-green-400 bg-green-50' : 'border-transparent'
           }`}
         >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverSkaters ? 'text-green-600' : 'text-gray-400'}`}>
             Skaters ({skaters.length})
           </p>
           <div className="space-y-1.5">
