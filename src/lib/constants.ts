@@ -10,6 +10,13 @@ export const PREFERENCE_COLORS: Record<Preference, string> = {
   unset: 'bg-gray-100 border-gray-300 text-gray-500',
 };
 
+export const CHIP_PREFERENCE_COLORS: Record<Preference, string> = {
+  preferred:  'bg-green-50 border-green-400',
+  acceptable: 'bg-blue-50 border-blue-400',
+  refused:    'bg-red-50 border-red-400',
+  unset:      'bg-white border-gray-300',
+};
+
 export const SLOT_DRAG_COLORS: Record<Preference, string> = {
   preferred: 'ring-2 ring-green-500 bg-green-50',
   acceptable: 'ring-2 ring-blue-500 bg-blue-50',

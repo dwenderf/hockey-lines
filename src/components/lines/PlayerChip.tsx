@@ -10,9 +10,10 @@ interface PlayerChipProps {
   readOnly?: boolean;
   onRemove?: () => void;
   isOverlay?: boolean;
+  preferenceClass?: string;
 }
 
-export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay }: PlayerChipProps) {
+export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
   const draggableId = fromSlot
     ? `slot-${fromSlot.slotId}-${fromSlot.position}-${player.id}`
     : `roster-overlay-${player.id}`;
@@ -33,11 +34,11 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay }: 
     <div
       ref={!isOverlay ? setNodeRef : undefined}
       style={!isOverlay ? style : undefined}
-      className={`flex items-center justify-between gap-1 rounded px-2 py-1 text-xs font-medium border shadow-sm w-full ${
-        inactive ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-white border-gray-300'
+      className={`flex items-center justify-between gap-1 rounded px-2 py-1.5 text-sm font-medium border shadow-sm w-full ${
+        inactive ? 'bg-gray-50 border-gray-200 opacity-60' : (preferenceClass ?? 'bg-white border-gray-300')
       } ${isDragging ? 'opacity-30' : ''} ${
         !readOnly && !isOverlay && !inactive ? 'cursor-grab active:cursor-grabbing' : ''
-      } ${isOverlay ? 'shadow-lg border-blue-400' : ''}`}
+      } ${isOverlay ? 'shadow-lg' : ''}`}
       {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
       <span className={`truncate ${inactive ? 'line-through text-gray-400' : ''}`}>

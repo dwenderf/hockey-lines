@@ -3,7 +3,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 import { PlayerChip } from './PlayerChip';
-import { SLOT_DRAG_COLORS } from '@/lib/constants';
+import { SLOT_DRAG_COLORS, CHIP_PREFERENCE_COLORS } from '@/lib/constants';
 import type { RosterPlayer, SlotRef, Preference } from '@/lib/types';
 
 interface PositionSlotProps {
@@ -37,7 +37,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove 
   return (
     <div
       ref={setNodeRef}
-      className={`relative flex min-h-[2.5rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${
+      className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${
         isOver
           ? `scale-105 ${dragColorClass || 'border-gray-300 bg-gray-50'}`
           : player
@@ -51,6 +51,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove 
           fromSlot={slotRef}
           readOnly={readOnly}
           onRemove={onRemove}
+          preferenceClass={player.is_active ? CHIP_PREFERENCE_COLORS[player.positions[slotRef.position] ?? 'unset'] : undefined}
         />
       ) : (
         <span className="w-full text-center text-xs text-gray-300 select-none">—</span>
