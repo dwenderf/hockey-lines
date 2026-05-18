@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
+
 import { RosterPlayer as RosterPlayerComponent } from './RosterPlayer';
 import { AddPlayerForm } from './AddPlayerForm';
 import { PlayerSearch } from './PlayerSearch';
@@ -16,7 +17,6 @@ interface RosterPanelProps {
   readOnly?: boolean;
   onAdd?: (name: string, isGoalie: boolean) => void;
   onAddExisting?: (playerId: string) => void;
-  onDeactivate?: (rosterId: string) => void;
   onMarkAbsent?: (playerId: string) => void;
   onMarkAvailable?: (playerId: string) => void;
   onUpdatePreference?: (rosterId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
@@ -30,7 +30,6 @@ export function RosterPanel({
   readOnly,
   onAdd,
   onAddExisting,
-  onDeactivate,
   onMarkAbsent,
   onMarkAvailable,
   onUpdatePreference,
@@ -41,6 +40,12 @@ export function RosterPanel({
   const { setNodeRef, isOver } = useDroppable({
     id: 'roster-dropzone',
     data: { type: 'roster' },
+    disabled: readOnly,
+  });
+
+  const { setNodeRef: setInactiveRef, isOver: isOverInactive } = useDroppable({
+    id: 'inactive-zone',
+    data: { type: 'inactive-section' },
     disabled: readOnly,
   });
 
@@ -70,7 +75,6 @@ export function RosterPanel({
               readOnly={readOnly}
               onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
               onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
-              onDeactivate={onDeactivate ? () => onDeactivate(p.roster_id) : undefined}
             />
           ))}
           {skaters.length === 0 && (
@@ -91,14 +95,13 @@ export function RosterPanel({
                   isAssigned={assignedPlayerIds.has(p.id)}
                   readOnly={readOnly}
                   onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
-                  onDeactivate={onDeactivate ? () => onDeactivate(p.roster_id) : undefined}
                 />
               ))}
             </div>
           </>
         )}
 
-        {outThisGame.length > 0 && (
+        {absentPlayerIds !== undefined && (
           <>
             <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-amber-500">
               Out this game ({outThisGame.length})
@@ -114,27 +117,37 @@ export function RosterPanel({
                   onMarkAvailable={onMarkAvailable ? () => onMarkAvailable(p.id) : undefined}
                 />
               ))}
+              {outThisGame.length === 0 && (
+                <p className="py-2 text-center text-xs text-gray-400">No players marked out</p>
+              )}
             </div>
           </>
         )}
 
-        {inactive.length > 0 && (
-          <>
-            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Inactive ({inactive.length})
-            </p>
-            <div className="space-y-1.5">
-              {inactive.map((p) => (
-                <RosterPlayerComponent
-                  key={p.id}
-                  player={p}
-                  isAssigned={false}
-                  readOnly={readOnly}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        <div
+          ref={setInactiveRef}
+          className={`mt-4 rounded-lg border-2 transition-colors ${
+            isOverInactive ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
+          }`}
+        >
+          <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverInactive ? 'text-red-500' : 'text-gray-400'}`}>
+            Inactive ({inactive.length})
+            {!readOnly && <span className="ml-1 font-normal normal-case">— drag here to deactivate</span>}
+          </p>
+          <div className="space-y-1.5">
+            {inactive.map((p) => (
+              <RosterPlayerComponent
+                key={p.id}
+                player={p}
+                isAssigned={false}
+                readOnly={readOnly}
+              />
+            ))}
+            {inactive.length === 0 && (
+              <p className="py-2 text-center text-xs text-gray-400">No inactive players</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {!readOnly && (onAdd || onAddExisting) && (

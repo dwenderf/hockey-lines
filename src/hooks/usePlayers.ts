@@ -165,6 +165,14 @@ export function usePlayers(teamId: string | null) {
     );
   }, []);
 
+  const reactivatePlayer = useCallback(async (rosterId: string) => {
+    const supabase = createClient();
+    await supabase.from('rosters').update({ is_active: true }).eq('id', rosterId);
+    setPlayers((prev) =>
+      prev.map((p) => (p.roster_id === rosterId ? { ...p, is_active: true } : p))
+    );
+  }, []);
+
   const updatePreference = useCallback(
     async (rosterId: string, position: Position, preference: Exclude<Preference, 'unset'> | null) => {
       const supabase = createClient();
@@ -195,5 +203,5 @@ export function usePlayers(teamId: string | null) {
     []
   );
 
-  return { players, loading, addPlayer, addExistingPlayer, deactivatePlayer, updatePreference, updateLevel };
+  return { players, loading, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel };
 }

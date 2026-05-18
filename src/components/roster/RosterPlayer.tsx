@@ -13,17 +13,16 @@ interface RosterPlayerProps {
   isAbsent?: boolean;
   readOnly?: boolean;
   onEdit?: () => void;
-  onDeactivate?: () => void;
   onMarkAbsent?: () => void;
   onMarkAvailable?: () => void;
 }
 
-export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, onDeactivate, onMarkAbsent, onMarkAvailable }: RosterPlayerProps) {
+export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, onMarkAbsent, onMarkAvailable }: RosterPlayerProps) {
   const inactive = !player.is_active;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `roster-${player.id}`,
     data: { type: 'roster-player', playerId: player.id },
-    disabled: isAssigned || readOnly || inactive || isAbsent,
+    disabled: isAssigned || readOnly,
   });
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
@@ -36,14 +35,14 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, o
       style={style}
       className={`flex items-center gap-2 rounded-lg border p-2 text-sm transition-opacity ${
         inactive
-          ? 'opacity-50 bg-gray-50 border-gray-200'
+          ? 'opacity-50 bg-gray-50 border-gray-200 cursor-grab active:cursor-grabbing'
           : isAbsent
-          ? 'opacity-60 bg-amber-50 border-amber-200'
+          ? 'opacity-60 bg-amber-50 border-amber-200 cursor-grab active:cursor-grabbing'
           : isAssigned
           ? 'opacity-40 bg-white border-gray-200'
           : 'cursor-grab active:cursor-grabbing bg-white hover:bg-gray-50 border-gray-200'
-      } ${isDragging ? 'opacity-50 shadow-lg' : ''}`}
-      {...(!isAssigned && !readOnly && !inactive && !isAbsent ? { ...listeners, ...attributes } : {})}
+      } ${isDragging ? 'opacity-30 shadow-lg' : ''}`}
+      {...(!isAssigned && !readOnly ? { ...listeners, ...attributes } : {})}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 truncate">
@@ -70,7 +69,7 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, o
           </div>
         )}
       </div>
-      {!readOnly && !inactive && (
+      {!readOnly && (
         <div className="flex shrink-0 gap-1">
           {isAbsent ? (
             onMarkAvailable && (
@@ -82,7 +81,7 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, o
                 Back
               </Button>
             )
-          ) : (
+          ) : !inactive ? (
             <>
               {onEdit && (
                 <Button variant="ghost" className="px-1.5 py-0.5 text-xs" onClick={onEdit}>
@@ -98,17 +97,8 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, o
                   Out
                 </Button>
               )}
-              {onDeactivate && (
-                <Button
-                  variant="ghost"
-                  className="px-1.5 py-0.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
-                  onClick={onDeactivate}
-                >
-                  ×
-                </Button>
-              )}
             </>
-          )}
+          ) : null}
         </div>
       )}
     </div>

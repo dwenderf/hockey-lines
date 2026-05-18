@@ -31,7 +31,7 @@ import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
 export default function ManagePage() {
   const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
   const { games, selectedGameId, setSelectedGameId, addGame } = useGames(selectedTeamId);
-  const { players, addPlayer, addExistingPlayer, deactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
+  const { players, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
   const { absentPlayerIds, markAbsent, markAvailable } = useGameAbsences(selectedGameId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(selectedGameId);
@@ -100,8 +100,23 @@ export default function ManagePage() {
       const dragData = active.data.current as DraggableData;
       const dropData = over.data.current as DroppableData;
       const playerId = dragData.playerId;
+      const player = playersById.get(playerId);
+
+      if (dropData.type === 'inactive-section') {
+        // Deactivate — but only if not currently in a slot
+        if (player?.is_active && !assignedPlayerIds.has(playerId)) {
+          deactivatePlayer(player.roster_id);
+        }
+        return;
+      }
 
       if (dropData.type === 'roster') {
+        const isInactive = player && !player.is_active;
+        if (isInactive) {
+          // Reactivate by dropping inactive player back onto the roster area
+          reactivatePlayer(player.roster_id);
+          return;
+        }
         // Remove from source slot if dragged from a slot
         if (dragData.type === 'slot-player') {
           updateSlotByRef(dragData.fromSlot, null);
@@ -110,6 +125,11 @@ export default function ManagePage() {
       }
 
       if (dropData.type === 'slot') {
+        // If player was absent, clear absence first
+        if (absentPlayerIds.has(playerId)) {
+          markAvailable(playerId);
+        }
+
         const targetRef = dropData.slotRef;
         // Find who is currently in target slot
         const currentOccupantId = [...placementMap.entries()].find(
@@ -132,7 +152,7 @@ export default function ManagePage() {
         updateSlotByRef(targetRef, playerId);
       }
     },
-    [placementMap, updateSlotByRef]
+    [placementMap, updateSlotByRef, playersById, assignedPlayerIds, absentPlayerIds, deactivatePlayer, reactivatePlayer, markAvailable]
   );
 
   const handleRemoveFromSlot = useCallback(
@@ -224,7 +244,6 @@ export default function ManagePage() {
                   teamId={selectedTeamId ?? undefined}
                   onAdd={addPlayer}
                   onAddExisting={addExistingPlayer}
-                  onDeactivate={deactivatePlayer}
                   onMarkAbsent={markAbsent}
                   onMarkAvailable={markAvailable}
                   onUpdatePreference={updatePreference}
