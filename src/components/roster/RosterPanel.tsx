@@ -69,7 +69,7 @@ export function RosterPanel({
   const active = players.filter((p) => p.is_active);
   const inactive = players.filter((p) => !p.is_active);
   const outThisGame = absentPlayerIds ? active.filter((p) => absentPlayerIds.has(p.id)) : [];
-  const skaters = active.filter((p) => !p.is_goalie && !absentPlayerIds?.has(p.id));
+  const skaters = active.filter((p) => !p.is_goalie && !absentPlayerIds?.has(p.id) && !assignedPlayerIds.has(p.id));
   const goalies = active.filter((p) => p.is_goalie && !absentPlayerIds?.has(p.id));
 
   return (
