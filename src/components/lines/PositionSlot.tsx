@@ -26,7 +26,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove 
   });
 
   let dragColorClass = '';
-  if (activeDragPlayerId && !readOnly && !isOver && !draggingAbsent) {
+  if (activeDragPlayerId && !readOnly && !draggingAbsent) {
     const activePlayer = playersById.get(activeDragPlayerId);
     if (activePlayer?.is_active) {
       const pref: Preference = activePlayer.positions[slotRef.position] ?? 'unset';
@@ -39,7 +39,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove 
       ref={setNodeRef}
       className={`relative flex min-h-[2.5rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${
         isOver
-          ? 'border-blue-400 bg-blue-50 scale-105'
+          ? `scale-105 ${dragColorClass || 'border-gray-300 bg-gray-50'}`
           : player
           ? 'border-gray-200 bg-gray-50'
           : dragColorClass || 'border-dashed border-gray-200 bg-white'
