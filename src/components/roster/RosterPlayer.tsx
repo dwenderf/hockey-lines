@@ -4,7 +4,6 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { FORWARD_POSITIONS, DEFENSE_POSITIONS } from '@/lib/constants';
 import { PositionBadge } from '@/components/preferences/PositionBadge';
-import { Button } from '@/components/ui/Button';
 import type { RosterPlayer } from '@/lib/types';
 
 interface RosterPlayerProps {
@@ -26,13 +25,19 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit }:
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
 
   const positions = [...FORWARD_POSITIONS, ...DEFENSE_POSITIONS];
-  const hasPositions = !player.is_goalie && !inactive && !isAbsent &&
-    positions.some((pos) => player.positions[pos]);
+  const showPositions = !player.is_goalie && !inactive && !isAbsent;
+
+  const handleClick = () => {
+    if (!readOnly && !inactive && !isAbsent && onEdit) {
+      onEdit();
+    }
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
+      onClick={handleClick}
       className={`flex flex-col rounded-lg border p-2 text-sm transition-opacity ${
         inactive
           ? 'opacity-50 bg-gray-50 border-gray-200 cursor-grab active:cursor-grabbing'
@@ -41,7 +46,7 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit }:
           : isAssigned
           ? 'opacity-40 bg-white border-gray-200'
           : 'cursor-grab active:cursor-grabbing bg-white hover:bg-gray-50 border-gray-200'
-      } ${isDragging ? 'opacity-30 shadow-lg' : ''}`}
+      } ${isDragging ? 'opacity-30 shadow-lg' : ''} ${showPositions && onEdit && !readOnly ? 'cursor-pointer' : ''}`}
       {...(!isAssigned && !readOnly ? { ...listeners, ...attributes } : {})}
     >
       {/* Name row */}
@@ -57,36 +62,16 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit }:
         )}
       </div>
 
-      {/* Positions row — only for active, non-absent skaters */}
-      {hasPositions && (
+      {/* Positions row — always shown for active, non-absent skaters */}
+      {showPositions && (
         <div className="mt-1 flex items-center gap-1 flex-wrap">
-          {positions.map((pos) => {
-            const pref = player.positions[pos];
-            if (!pref) return null;
-            return <PositionBadge key={pos} position={pos} preference={pref} />;
-          })}
-          {!readOnly && onEdit && (
-            <Button
-              variant="ghost"
-              className="ml-auto px-1.5 py-0.5 text-xs"
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            >
-              Pos
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Pos button when there are no position badges yet */}
-      {!hasPositions && !inactive && !isAbsent && !readOnly && onEdit && (
-        <div className="mt-1 flex justify-end">
-          <Button
-            variant="ghost"
-            className="px-1.5 py-0.5 text-xs"
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          >
-            Pos
-          </Button>
+          {positions.map((pos) => (
+            <PositionBadge
+              key={pos}
+              position={pos}
+              preference={player.positions[pos] ?? 'unset'}
+            />
+          ))}
         </div>
       )}
     </div>
