@@ -87,7 +87,7 @@ export function RosterPanel({
             isOverSkaters ? 'border-green-400 bg-green-50' : 'border-transparent'
           }`}
         >
-          <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverSkaters ? 'text-green-600' : 'text-gray-400'}`}>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-600">
             Skaters ({skaters.length})
           </p>
           <div className="space-y-1.5">
@@ -160,7 +160,7 @@ export function RosterPanel({
             isOverInactive ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
           }`}
         >
-          <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverInactive ? 'text-red-500' : 'text-gray-400'}`}>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
             Inactive ({inactive.length})
             {!readOnly && <span className="ml-1 font-normal normal-case">— drag here to deactivate</span>}
           </p>
