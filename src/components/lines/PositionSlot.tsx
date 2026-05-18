@@ -15,16 +15,18 @@ interface PositionSlotProps {
 }
 
 export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove }: PositionSlotProps) {
-  const { activeDragPlayerId } = useDragState();
+  const { activeDragPlayerId, absentPlayerIds } = useDragState();
+
+  const draggingAbsent = activeDragPlayerId ? absentPlayerIds.has(activeDragPlayerId) : false;
 
   const { setNodeRef, isOver } = useDroppable({
     id: `slot-${slotRef.slotId}-${slotRef.position}`,
     data: { type: 'slot', slotRef },
-    disabled: readOnly,
+    disabled: readOnly || draggingAbsent,
   });
 
   let dragColorClass = '';
-  if (activeDragPlayerId && !readOnly && !isOver) {
+  if (activeDragPlayerId && !readOnly && !isOver && !draggingAbsent) {
     const activePlayer = playersById.get(activeDragPlayerId);
     if (activePlayer?.is_active) {
       const pref: Preference = activePlayer.positions[slotRef.position] ?? 'unset';

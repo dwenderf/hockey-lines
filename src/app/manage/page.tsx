@@ -187,7 +187,7 @@ export default function ManagePage() {
   const activePlayer = activeDragPlayerId ? playersById.get(activeDragPlayerId) : null;
 
   return (
-    <DragStateContext.Provider value={{ activeDragPlayerId }}>
+    <DragStateContext.Provider value={{ activeDragPlayerId, absentPlayerIds }}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
