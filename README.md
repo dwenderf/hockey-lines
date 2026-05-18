@@ -6,15 +6,25 @@ Build and manage hockey lines for your team. The captain drags and drops players
 
 ### 1. Supabase
 
-1. Create a new [Supabase](https://supabase.com) project
+1. Create a new [Supabase](https://supabase.com) project with **Enable automatic RLS** turned on
 2. Run the migration in the SQL editor: paste the contents of `supabase/migrations/001_initial_schema.sql`
 3. Enable Realtime on the slot tables: Database → Replication → Tables → enable `forward_line_slots` and `defense_line_slots`
-4. Enable Google OAuth: Authentication → Providers → Google → add your Google Cloud Console credentials
-   - Set the callback URL in Google Cloud Console to: `https://<project-ref>.supabase.co/auth/v1/callback`
-5. Insert a row into the `teams` table and note its UUID:
+4. Set up Google OAuth:
+   - In [Google Cloud Console](https://console.cloud.google.com): create a project → APIs & Services → Credentials → Create OAuth 2.0 Client ID (Web application)
+   - Add authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`
+   - Copy the **Client ID** and **Client Secret**
+   - In Supabase: Authentication → Providers → Google → enable it → paste the Client ID and Client Secret
+5. Create your team and claim it as owner. Run these in the SQL editor:
    ```sql
+   -- Create the team
    insert into teams (name) values ('My Team') returning id;
+
+   -- Find your auth UID after signing in once with Google (Authentication → Users)
+   -- Then run:
+   update teams set auth_user_id = '<your-auth-uid>' where id = '<team-uuid>';
+   insert into system_admins (auth_user_id) values ('<your-auth-uid>');
    ```
+   > **Tip:** Sign in via Google first (step 3 of Run Locally below), then come back and run the `update` and `insert` above. Your auth UID appears in Supabase under Authentication → Users.
 
 ### 2. Environment variables
 
@@ -33,14 +43,18 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — public view.
-Open [http://localhost:3000/manage](http://localhost:3000/manage) — captain editor (requires Google login).
+1. Open [http://localhost:3000/manage](http://localhost:3000/manage) — you'll be redirected to `/login`
+2. Sign in with Google
+3. If this is your first login, go back to Supabase and run the `update teams` and `insert into system_admins` SQL from step 1.5 above using your newly created auth UID
+
+Open [http://localhost:3000](http://localhost:3000) for the public view.
 
 ## Deploy to Vercel
 
 1. Push to GitHub and import the repo in [Vercel](https://vercel.com)
 2. Add the three environment variables in the Vercel project settings
-3. Set the Google OAuth callback URL in Supabase to your production domain: `https://yourdomain.com/auth/callback`
+3. In Supabase: Authentication → URL Configuration → set **Site URL** to your production domain
+4. In Google Cloud Console: add your production callback URL as an additional authorized redirect URI: `https://yourdomain.com/auth/callback`
 
 ## How it works
 
