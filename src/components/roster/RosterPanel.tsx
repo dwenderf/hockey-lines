@@ -74,7 +74,7 @@ export function RosterPanel({
       <div
         ref={setNodeRef}
         className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-lg border-2 p-3 transition-colors ${
-          isOver ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
+          isOver && !draggingInactive && !draggingAbsent ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
         }`}
       >
         <div
@@ -150,7 +150,7 @@ export function RosterPanel({
         <div
           ref={setInactiveRef}
           className={`mt-4 rounded-lg border-2 transition-colors ${
-            isOverInactive ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
+            isOverInactive && !draggingAbsent ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
           }`}
         >
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
