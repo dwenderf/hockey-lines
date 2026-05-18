@@ -48,7 +48,7 @@ export function RosterPanel({
   const { setNodeRef: setInactiveRef, isOver: isOverInactive } = useDroppable({
     id: 'inactive-zone',
     data: { type: 'inactive-section' },
-    disabled: readOnly,
+    disabled: readOnly || draggingAbsent,
   });
 
   const { setNodeRef: setSkatersRef, isOver: isOverSkaters } = useDroppable({
