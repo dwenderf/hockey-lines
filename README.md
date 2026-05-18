@@ -8,7 +8,7 @@ Build and manage hockey lines for your team. The captain drags and drops players
 
 1. Create a new [Supabase](https://supabase.com) project with **Enable automatic RLS** turned on
 2. Run the migration in the SQL editor: paste the contents of `supabase/migrations/001_initial_schema.sql`
-3. Enable Realtime on the slot tables: Database → Replication → Tables → enable `forward_line_slots` and `defense_line_slots`
+3. Enable Realtime on the following tables: Database → Replication → Tables → enable `forward_line_slots`, `defense_line_slots`, and `players`
 4. Set up Google OAuth:
    - In [Google Cloud Console](https://console.cloud.google.com): create a project → APIs & Services → Credentials → Create OAuth 2.0 Client ID (Web application)
    - Add authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`
