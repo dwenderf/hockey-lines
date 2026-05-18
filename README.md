@@ -32,8 +32,7 @@ Copy `.env.local.example` to `.env.local` and fill in the values:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJ...
-NEXT_PUBLIC_TEAM_ID=<uuid from teams table>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
 ### 3. Run locally

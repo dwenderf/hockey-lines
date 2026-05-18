@@ -13,6 +13,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { createClient } from '@/lib/supabase/client';
+import { useTeams } from '@/hooks/useTeams';
 import { useGames } from '@/hooks/useGames';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useForwardSlots } from '@/hooks/useForwardSlots';
@@ -26,11 +27,10 @@ import { PlayerChip } from '@/components/lines/PlayerChip';
 import { Button } from '@/components/ui/Button';
 import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
 
-const TEAM_ID = process.env.NEXT_PUBLIC_TEAM_ID!;
-
 export default function ManagePage() {
-  const { games, selectedGameId, setSelectedGameId, addGame } = useGames(TEAM_ID);
-  const { players, addPlayer, deactivatePlayer, updatePreference, updateLevel } = usePlayers(TEAM_ID);
+  const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
+  const { games, selectedGameId, setSelectedGameId, addGame } = useGames(selectedTeamId);
+  const { players, addPlayer, addExistingPlayer, deactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(selectedGameId);
 
@@ -158,26 +158,54 @@ export default function ManagePage() {
       >
         <div className="flex h-screen flex-col bg-gray-100">
           {/* Header */}
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <h1 className="text-lg font-bold text-gray-900">Hockey Lines</h1>
-              <span className="text-gray-300">|</span>
-              <GameSelector
-                games={games}
-                selectedGameId={selectedGameId}
-                onSelect={setSelectedGameId}
-              />
-              <Button variant="secondary" onClick={() => setShowAddGame(true)}>
-                + Game
-              </Button>
-            </div>
-            <div className="flex items-center gap-3">
-              <a href="/" target="_blank" className="text-xs text-blue-500 hover:underline">
-                Public view ↗
-              </a>
-              <Button variant="ghost" onClick={handleLogout}>
-                Logout
-              </Button>
+          <header className="border-b border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <h1 className="text-lg font-bold text-gray-900">Hockey Lines</h1>
+                {teams.length > 1 && (
+                  <>
+                    <span className="text-gray-300">|</span>
+                    <div className="flex gap-1">
+                      {teams.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setSelectedTeamId(t.id)}
+                          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                            selectedTeamId === t.id
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {teams.length === 1 && (
+                  <>
+                    <span className="text-gray-300">|</span>
+                    <span className="text-sm font-medium text-gray-700">{teams[0].name}</span>
+                  </>
+                )}
+                <span className="text-gray-300">|</span>
+                <GameSelector
+                  games={games}
+                  selectedGameId={selectedGameId}
+                  onSelect={setSelectedGameId}
+                />
+                <Button variant="secondary" onClick={() => setShowAddGame(true)}>
+                  + Game
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <a href="/" target="_blank" className="text-xs text-blue-500 hover:underline">
+                  Public view ↗
+                </a>
+                <Button variant="ghost" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </div>
             </div>
           </header>
 
@@ -190,7 +218,9 @@ export default function ManagePage() {
                 <RosterPanel
                   players={players}
                   assignedPlayerIds={assignedPlayerIds}
+                  teamId={selectedTeamId ?? undefined}
                   onAdd={addPlayer}
+                  onAddExisting={addExistingPlayer}
                   onDeactivate={deactivatePlayer}
                   onUpdatePreference={updatePreference}
                 />

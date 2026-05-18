@@ -104,6 +104,58 @@ export function usePlayers(teamId: string | null) {
     [teamId]
   );
 
+  const addExistingPlayer = useCallback(
+    async (playerId: string) => {
+      if (!teamId) return;
+      const supabase = createClient();
+
+      // Get player identity
+      const { data: player } = await supabase
+        .from('players')
+        .select('id, name, is_goalie')
+        .eq('id', playerId)
+        .single();
+      if (!player) return;
+
+      // Copy positions from most recent roster entry for this player
+      const { data: existingRoster } = await supabase
+        .from('rosters')
+        .select('positions')
+        .eq('player_id', playerId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const { data: roster } = await supabase
+        .from('rosters')
+        .insert({
+          team_id: teamId,
+          player_id: playerId,
+          positions: existingRoster?.positions ?? {},
+        })
+        .select()
+        .single();
+
+      if (roster) {
+        const rosterPlayer: RosterPlayer = {
+          id: player.id,
+          name: player.name,
+          is_goalie: player.is_goalie,
+          roster_id: roster.id,
+          team_id: roster.team_id,
+          positions: roster.positions,
+          player_level: roster.player_level,
+          is_team_admin: roster.is_team_admin,
+          is_active: roster.is_active,
+        };
+        setPlayers((prev) =>
+          [...prev, rosterPlayer].sort((a, b) => a.name.localeCompare(b.name))
+        );
+      }
+    },
+    [teamId]
+  );
+
   // Deactivate rather than delete — preserves historical line assignments
   const deactivatePlayer = useCallback(async (rosterId: string) => {
     const supabase = createClient();
@@ -143,5 +195,5 @@ export function usePlayers(teamId: string | null) {
     []
   );
 
-  return { players, loading, addPlayer, deactivatePlayer, updatePreference, updateLevel };
+  return { players, loading, addPlayer, addExistingPlayer, deactivatePlayer, updatePreference, updateLevel };
 }
