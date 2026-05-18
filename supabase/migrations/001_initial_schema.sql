@@ -1,9 +1,12 @@
 -- Teams
 create table teams (
-  id         uuid primary key default gen_random_uuid(),
-  name       text not null,
-  created_at timestamptz not null default now()
+  id           uuid primary key default gen_random_uuid(),
+  name         text not null,
+  auth_user_id uuid references auth.users(id) on delete set null,
+  created_at   timestamptz not null default now()
 );
+
+create index teams_auth_user_id_idx on teams(auth_user_id);
 
 -- Players (identity only)
 create table players (
@@ -63,13 +66,34 @@ create table defense_line_slots (
   unique (game_id, line_number)
 );
 
+-- Leagues (scaffold only — no league_id FK on teams yet, added in v2 when NYCPHA onboards)
+create table leagues (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  created_at timestamptz not null default now()
+);
+
+-- System admins (keyed to auth.users — a system admin may not be a player)
+-- Rows inserted manually via SQL editor only; no client write policy.
+create table system_admins (
+  id           uuid primary key default gen_random_uuid(),
+  auth_user_id uuid not null references auth.users(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  unique (auth_user_id)
+);
+
+-- ============================================================
 -- RLS
+-- ============================================================
+
 alter table teams              enable row level security;
 alter table players            enable row level security;
 alter table rosters            enable row level security;
 alter table games              enable row level security;
 alter table forward_line_slots enable row level security;
 alter table defense_line_slots enable row level security;
+alter table leagues            enable row level security;
+alter table system_admins      enable row level security;
 
 -- Public read
 create policy "public read" on teams              for select using (true);
@@ -78,15 +102,85 @@ create policy "public read" on rosters            for select using (true);
 create policy "public read" on games              for select using (true);
 create policy "public read" on forward_line_slots for select using (true);
 create policy "public read" on defense_line_slots for select using (true);
+create policy "public read" on leagues            for select using (true);
 
--- Auth write (captain)
-create policy "auth write" on teams              for all using (auth.role() = 'authenticated');
-create policy "auth write" on players            for all using (auth.role() = 'authenticated');
-create policy "auth write" on rosters            for all using (auth.role() = 'authenticated');
-create policy "auth write" on games              for all using (auth.role() = 'authenticated');
-create policy "auth write" on forward_line_slots for all using (auth.role() = 'authenticated');
-create policy "auth write" on defense_line_slots for all using (auth.role() = 'authenticated');
+-- System admin self-read only (no one can see others' system_admin rows)
+create policy "self read" on system_admins
+  for select using (auth.uid() = auth_user_id);
 
--- Enable Realtime on slot tables (Supabase dashboard: Database → Replication → Tables)
+-- Helper: returns true if the current auth user owns the given team
+create or replace function is_team_owner(p_team_id uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from teams
+    where id = p_team_id
+    and auth_user_id = auth.uid()
+  )
+$$;
+
+-- Teams: only the owning auth user can write
+create policy "owner write" on teams
+  for all using (auth.uid() = auth_user_id);
+
+-- Rosters + games: scoped to team owner
+create policy "owner write" on rosters
+  for all using (is_team_owner(team_id));
+
+create policy "owner write" on games
+  for all using (is_team_owner(team_id));
+
+-- Slot tables: check ownership via the parent game's team
+create policy "owner write" on forward_line_slots
+  for all using (
+    exists (
+      select 1 from games g
+      where g.id = game_id
+      and is_team_owner(g.team_id)
+    )
+  );
+
+create policy "owner write" on defense_line_slots
+  for all using (
+    exists (
+      select 1 from games g
+      where g.id = game_id
+      and is_team_owner(g.team_id)
+    )
+  );
+
+-- Players: any authenticated user can write (shared identity across teams; tighten in v2)
+create policy "auth write" on players
+  for all using (auth.role() = 'authenticated');
+
+-- Leagues: any authenticated user can write (no real league data yet; tighten in v2)
+create policy "auth write" on leagues
+  for all using (auth.role() = 'authenticated');
+
+-- system_admins: NO client write policy — rows inserted via SQL editor only.
+
+-- ============================================================
+-- Enable Realtime on slot tables
+-- Run in Supabase dashboard: Database → Replication → Tables
+-- or uncomment and run:
 -- alter publication supabase_realtime add table forward_line_slots;
 -- alter publication supabase_realtime add table defense_line_slots;
+-- ============================================================
+
+-- ============================================================
+-- Post-migration setup (run once, substituting your values)
+-- ============================================================
+--
+-- 1. Find your auth UID: Supabase dashboard → Authentication → Users → copy your UUID
+--
+-- 2. Claim your team:
+--    update teams
+--    set auth_user_id = '<your-auth-uid>'
+--    where id = '<your-NEXT_PUBLIC_TEAM_ID>';
+--
+-- 3. Grant yourself system admin:
+--    insert into system_admins (auth_user_id)
+--    values ('<your-auth-uid>');
