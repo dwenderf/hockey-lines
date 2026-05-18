@@ -42,19 +42,22 @@ export function RosterPanel({
   const { setNodeRef, isOver } = useDroppable({
     id: 'roster-dropzone',
     data: { type: 'roster' },
-    disabled: readOnly || draggingInactive || draggingAbsent,
+    // Re-enabled for absent players: the whole panel becomes the drop target
+    disabled: readOnly || draggingInactive,
   });
 
   const { setNodeRef: setInactiveRef, isOver: isOverInactive } = useDroppable({
     id: 'inactive-zone',
     data: { type: 'inactive-section' },
-    disabled: readOnly || draggingAbsent,
+    // Disable for absent AND inactive — neither belongs here
+    disabled: readOnly || draggingAbsent || draggingInactive,
   });
 
   const { setNodeRef: setSkatersRef, isOver: isOverSkaters } = useDroppable({
     id: 'skaters-section',
     data: { type: 'skaters-section' },
-    disabled: readOnly,
+    // Disable for absent: roster-dropzone handles it as one large target
+    disabled: readOnly || draggingAbsent,
   });
 
   const { setNodeRef: setOutRef, isOver: isOverOut } = useDroppable({
@@ -74,13 +77,13 @@ export function RosterPanel({
       <div
         ref={setNodeRef}
         className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-lg border-2 p-3 transition-colors ${
-          isOver && !draggingInactive && !draggingAbsent ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
+          isOver && draggingAbsent ? 'border-green-400 bg-green-50' : isOver && !draggingInactive ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
         }`}
       >
         <div
           ref={setSkatersRef}
           className={`rounded-lg border-2 p-1 transition-colors ${
-            isOverSkaters ? 'border-green-400 bg-green-50' : 'border-transparent'
+            isOverSkaters && !draggingAbsent ? 'border-green-400 bg-green-50' : 'border-transparent'
           }`}
         >
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-600">
@@ -124,10 +127,10 @@ export function RosterPanel({
           <div
             ref={setOutRef}
             className={`mt-4 rounded-lg border-2 p-1 transition-colors ${
-              isOverOut ? 'border-amber-400 bg-amber-50' : 'border-transparent'
+              isOverOut && !draggingAbsent && !draggingInactive ? 'border-amber-400 bg-amber-50' : 'border-transparent'
             }`}
           >
-            <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverOut ? 'text-amber-600' : 'text-amber-500'}`}>
+            <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverOut && !draggingAbsent && !draggingInactive ? 'text-amber-600' : 'text-amber-500'}`}>
               Out this game ({outThisGame.length})
             </p>
             <div className="space-y-1.5">
@@ -150,7 +153,7 @@ export function RosterPanel({
         <div
           ref={setInactiveRef}
           className={`mt-4 rounded-lg border-2 transition-colors ${
-            isOverInactive && !draggingAbsent ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
+            isOverInactive && !draggingAbsent && !draggingInactive ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
           }`}
         >
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">

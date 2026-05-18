@@ -128,8 +128,13 @@ export default function ManagePage() {
       }
 
       if (dropData.type === 'roster') {
-        // Inactive and absent players can't drop on the generic roster area
-        if (!player?.is_active || absentPlayerIds.has(playerId)) return;
+        // Inactive players can't use the generic roster dropzone
+        if (!player?.is_active) return;
+        // Absent players dropped on the roster panel → mark available
+        if (absentPlayerIds.has(playerId)) {
+          markAvailable(playerId);
+          return;
+        }
         // Remove from source slot if dragged from a slot
         if (dragData.type === 'slot-player') {
           updateSlotByRef(dragData.fromSlot, null);
