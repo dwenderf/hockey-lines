@@ -55,6 +55,12 @@ export function RosterPanel({
     disabled: readOnly,
   });
 
+  const { setNodeRef: setOutRef, isOver: isOverOut } = useDroppable({
+    id: 'out-this-game',
+    data: { type: 'out-this-game' },
+    disabled: readOnly || absentPlayerIds === undefined,
+  });
+
   const active = players.filter((p) => p.is_active);
   const inactive = players.filter((p) => !p.is_active);
   const outThisGame = absentPlayerIds ? active.filter((p) => absentPlayerIds.has(p.id)) : [];
@@ -72,7 +78,7 @@ export function RosterPanel({
         <div
           ref={setSkatersRef}
           className={`rounded-lg border-2 p-1 transition-colors ${
-            isOverSkaters ? 'border-blue-400 bg-blue-50' : 'border-transparent'
+            isOverSkaters ? 'border-green-400 bg-green-50' : 'border-transparent'
           }`}
         >
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -115,8 +121,13 @@ export function RosterPanel({
         )}
 
         {absentPlayerIds !== undefined && (
-          <>
-            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-amber-500">
+          <div
+            ref={setOutRef}
+            className={`mt-4 rounded-lg border-2 p-1 transition-colors ${
+              isOverOut ? 'border-amber-400 bg-amber-50' : 'border-transparent'
+            }`}
+          >
+            <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${isOverOut ? 'text-amber-600' : 'text-amber-500'}`}>
               Out this game ({outThisGame.length})
             </p>
             <div className="space-y-1.5">
@@ -134,7 +145,7 @@ export function RosterPanel({
                 <p className="py-2 text-center text-xs text-gray-400">No players marked out</p>
               )}
             </div>
-          </>
+          </div>
         )}
 
         <div

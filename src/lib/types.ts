@@ -80,4 +80,5 @@ export type DroppableData =
   | { type: 'slot'; slotRef: SlotRef }
   | { type: 'roster' }
   | { type: 'inactive-section' }
-  | { type: 'skaters-section' };
+  | { type: 'skaters-section' }
+  | { type: 'out-this-game' };

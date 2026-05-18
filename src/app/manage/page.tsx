@@ -103,7 +103,6 @@ export default function ManagePage() {
       const player = playersById.get(playerId);
 
       if (dropData.type === 'skaters-section') {
-        // Reactivate inactive player or clear absence for out-this-game player
         if (player && !player.is_active) {
           reactivatePlayer(player.roster_id);
         } else if (absentPlayerIds.has(playerId)) {
@@ -112,17 +111,27 @@ export default function ManagePage() {
         return;
       }
 
+      if (dropData.type === 'out-this-game') {
+        // Mark active, non-absent player as out for this game
+        if (player?.is_active && !absentPlayerIds.has(playerId)) {
+          markAbsent(playerId);
+        }
+        return;
+      }
+
       if (dropData.type === 'inactive-section') {
-        // Deactivate — only if active and not currently in a slot
-        if (player?.is_active && !assignedPlayerIds.has(playerId)) {
+        // Deactivate — only if active, not absent, and not currently in a slot
+        if (player?.is_active && !absentPlayerIds.has(playerId) && !assignedPlayerIds.has(playerId)) {
           deactivatePlayer(player.roster_id);
         }
         return;
       }
 
       if (dropData.type === 'roster') {
-        // Remove from source slot if dragged from a slot (active players only)
-        if (dragData.type === 'slot-player' && player?.is_active && !absentPlayerIds.has(playerId)) {
+        // Inactive and absent players can't drop on the generic roster area
+        if (!player?.is_active || absentPlayerIds.has(playerId)) return;
+        // Remove from source slot if dragged from a slot
+        if (dragData.type === 'slot-player') {
           updateSlotByRef(dragData.fromSlot, null);
         }
         return;
@@ -154,7 +163,7 @@ export default function ManagePage() {
         updateSlotByRef(targetRef, playerId);
       }
     },
-    [placementMap, updateSlotByRef, playersById, assignedPlayerIds, absentPlayerIds, deactivatePlayer, reactivatePlayer, markAvailable]
+    [placementMap, updateSlotByRef, playersById, assignedPlayerIds, absentPlayerIds, deactivatePlayer, reactivatePlayer, markAbsent, markAvailable]
   );
 
   const handleRemoveFromSlot = useCallback(
