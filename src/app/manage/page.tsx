@@ -258,8 +258,8 @@ export default function ManagePage() {
                       </Button>
                     </>
                   ) : (
-                    <Button variant="secondary" onClick={() => publishGame(selectedGame.id)}>
-                      Publish
+                    <Button variant="primary" onClick={() => publishGame(selectedGame.id)}>
+                      Publish lines
                     </Button>
                   )
                 )}
