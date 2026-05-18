@@ -102,8 +102,18 @@ export default function ManagePage() {
       const playerId = dragData.playerId;
       const player = playersById.get(playerId);
 
+      if (dropData.type === 'skaters-section') {
+        // Reactivate inactive player or clear absence for out-this-game player
+        if (player && !player.is_active) {
+          reactivatePlayer(player.roster_id);
+        } else if (absentPlayerIds.has(playerId)) {
+          markAvailable(playerId);
+        }
+        return;
+      }
+
       if (dropData.type === 'inactive-section') {
-        // Deactivate — but only if not currently in a slot
+        // Deactivate — only if active and not currently in a slot
         if (player?.is_active && !assignedPlayerIds.has(playerId)) {
           deactivatePlayer(player.roster_id);
         }
@@ -111,24 +121,16 @@ export default function ManagePage() {
       }
 
       if (dropData.type === 'roster') {
-        const isInactive = player && !player.is_active;
-        if (isInactive) {
-          // Reactivate by dropping inactive player back onto the roster area
-          reactivatePlayer(player.roster_id);
-          return;
-        }
-        // Remove from source slot if dragged from a slot
-        if (dragData.type === 'slot-player') {
+        // Remove from source slot if dragged from a slot (active players only)
+        if (dragData.type === 'slot-player' && player?.is_active && !absentPlayerIds.has(playerId)) {
           updateSlotByRef(dragData.fromSlot, null);
         }
         return;
       }
 
       if (dropData.type === 'slot') {
-        // If player was absent, clear absence first
-        if (absentPlayerIds.has(playerId)) {
-          markAvailable(playerId);
-        }
+        // Inactive and absent players can't go directly to slots — must go to Skaters first
+        if (!player?.is_active || absentPlayerIds.has(playerId)) return;
 
         const targetRef = dropData.slotRef;
         // Find who is currently in target slot

@@ -79,4 +79,5 @@ export type DraggableData =
 export type DroppableData =
   | { type: 'slot'; slotRef: SlotRef }
   | { type: 'roster' }
-  | { type: 'inactive-section' };
+  | { type: 'inactive-section' }
+  | { type: 'skaters-section' };

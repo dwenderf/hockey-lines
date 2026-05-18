@@ -49,6 +49,12 @@ export function RosterPanel({
     disabled: readOnly,
   });
 
+  const { setNodeRef: setSkatersRef, isOver: isOverSkaters } = useDroppable({
+    id: 'skaters-section',
+    data: { type: 'skaters-section' },
+    disabled: readOnly,
+  });
+
   const active = players.filter((p) => p.is_active);
   const inactive = players.filter((p) => !p.is_active);
   const outThisGame = absentPlayerIds ? active.filter((p) => absentPlayerIds.has(p.id)) : [];
@@ -63,23 +69,30 @@ export function RosterPanel({
           isOver ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
         }`}
       >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Skaters ({skaters.length})
-        </p>
-        <div className="space-y-1.5">
-          {skaters.map((p) => (
-            <RosterPlayerComponent
-              key={p.id}
-              player={p}
-              isAssigned={assignedPlayerIds.has(p.id)}
-              readOnly={readOnly}
-              onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
-              onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
-            />
-          ))}
-          {skaters.length === 0 && (
-            <p className="py-4 text-center text-xs text-gray-400">No skaters yet</p>
-          )}
+        <div
+          ref={setSkatersRef}
+          className={`rounded-lg border-2 p-1 transition-colors ${
+            isOverSkaters ? 'border-blue-400 bg-blue-50' : 'border-transparent'
+          }`}
+        >
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Skaters ({skaters.length})
+          </p>
+          <div className="space-y-1.5">
+            {skaters.map((p) => (
+              <RosterPlayerComponent
+                key={p.id}
+                player={p}
+                isAssigned={assignedPlayerIds.has(p.id)}
+                readOnly={readOnly}
+                onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
+                onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
+              />
+            ))}
+            {skaters.length === 0 && (
+              <p className="py-4 text-center text-xs text-gray-400">No skaters yet</p>
+            )}
+          </div>
         </div>
 
         {goalies.length > 0 && (
