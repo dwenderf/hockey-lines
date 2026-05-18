@@ -13,11 +13,9 @@ interface RosterPlayerProps {
   isAbsent?: boolean;
   readOnly?: boolean;
   onEdit?: () => void;
-  onMarkAbsent?: () => void;
-  onMarkAvailable?: () => void;
 }
 
-export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, onMarkAbsent, onMarkAvailable }: RosterPlayerProps) {
+export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit }: RosterPlayerProps) {
   const inactive = !player.is_active;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `roster-${player.id}`,
@@ -28,12 +26,14 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, o
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
 
   const positions = [...FORWARD_POSITIONS, ...DEFENSE_POSITIONS];
+  const hasPositions = !player.is_goalie && !inactive && !isAbsent &&
+    positions.some((pos) => player.positions[pos]);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 rounded-lg border p-2 text-sm transition-opacity ${
+      className={`flex flex-col rounded-lg border p-2 text-sm transition-opacity ${
         inactive
           ? 'opacity-50 bg-gray-50 border-gray-200 cursor-grab active:cursor-grabbing'
           : isAbsent
@@ -44,61 +44,49 @@ export function RosterPlayer({ player, isAssigned, isAbsent, readOnly, onEdit, o
       } ${isDragging ? 'opacity-30 shadow-lg' : ''}`}
       {...(!isAssigned && !readOnly ? { ...listeners, ...attributes } : {})}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 truncate">
-          <span className={`font-medium truncate ${inactive ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-            {player.name}
-          </span>
-          {player.is_goalie && (
-            <span className="shrink-0 rounded bg-yellow-100 px-1 text-xs text-yellow-700">G</span>
-          )}
-          {inactive && (
-            <span className="shrink-0 rounded bg-gray-100 px-1 text-xs text-gray-400">Inactive</span>
-          )}
-          {isAbsent && (
-            <span className="shrink-0 rounded bg-amber-100 px-1 text-xs text-amber-700">Out</span>
-          )}
-        </div>
-        {!player.is_goalie && !inactive && !isAbsent && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {positions.map((pos) => {
-              const pref = player.positions[pos];
-              if (!pref) return null;
-              return <PositionBadge key={pos} position={pos} preference={pref} />;
-            })}
-          </div>
+      {/* Name row */}
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className={`font-medium truncate flex-1 ${inactive ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+          {player.name}
+        </span>
+        {player.is_goalie && (
+          <span className="shrink-0 rounded bg-yellow-100 px-1 text-xs text-yellow-700">G</span>
+        )}
+        {inactive && (
+          <span className="shrink-0 rounded bg-gray-100 px-1 text-xs text-gray-400">Inactive</span>
         )}
       </div>
-      {!readOnly && (
-        <div className="flex shrink-0 gap-1">
-          {isAbsent ? (
-            onMarkAvailable && (
-              <Button
-                variant="ghost"
-                className="px-1.5 py-0.5 text-xs text-green-600 hover:text-green-800 hover:bg-green-50"
-                onClick={onMarkAvailable}
-              >
-                Back
-              </Button>
-            )
-          ) : !inactive ? (
-            <>
-              {onEdit && (
-                <Button variant="ghost" className="px-1.5 py-0.5 text-xs" onClick={onEdit}>
-                  Pos
-                </Button>
-              )}
-              {onMarkAbsent && (
-                <Button
-                  variant="ghost"
-                  className="px-1.5 py-0.5 text-xs text-amber-600 hover:text-amber-800 hover:bg-amber-50"
-                  onClick={onMarkAbsent}
-                >
-                  Out
-                </Button>
-              )}
-            </>
-          ) : null}
+
+      {/* Positions row — only for active, non-absent skaters */}
+      {hasPositions && (
+        <div className="mt-1 flex items-center gap-1 flex-wrap">
+          {positions.map((pos) => {
+            const pref = player.positions[pos];
+            if (!pref) return null;
+            return <PositionBadge key={pos} position={pos} preference={pref} />;
+          })}
+          {!readOnly && onEdit && (
+            <Button
+              variant="ghost"
+              className="ml-auto px-1.5 py-0.5 text-xs"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            >
+              Pos
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Pos button when there are no position badges yet */}
+      {!hasPositions && !inactive && !isAbsent && !readOnly && onEdit && (
+        <div className="mt-1 flex justify-end">
+          <Button
+            variant="ghost"
+            className="px-1.5 py-0.5 text-xs"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          >
+            Pos
+          </Button>
         </div>
       )}
     </div>

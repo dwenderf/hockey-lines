@@ -255,8 +255,6 @@ export default function ManagePage() {
                   teamId={selectedTeamId ?? undefined}
                   onAdd={addPlayer}
                   onAddExisting={addExistingPlayer}
-                  onMarkAbsent={markAbsent}
-                  onMarkAvailable={markAvailable}
                   onUpdatePreference={updatePreference}
                 />
               </div>

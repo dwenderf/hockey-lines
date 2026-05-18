@@ -18,8 +18,6 @@ interface RosterPanelProps {
   readOnly?: boolean;
   onAdd?: (name: string, isGoalie: boolean) => void;
   onAddExisting?: (playerId: string) => void;
-  onMarkAbsent?: (playerId: string) => void;
-  onMarkAvailable?: (playerId: string) => void;
   onUpdatePreference?: (rosterId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
 }
 
@@ -31,8 +29,6 @@ export function RosterPanel({
   readOnly,
   onAdd,
   onAddExisting,
-  onMarkAbsent,
-  onMarkAvailable,
   onUpdatePreference,
 }: RosterPanelProps) {
   const [addMode, setAddMode] = useState<'search' | 'new'>('search');
@@ -98,7 +94,6 @@ export function RosterPanel({
                 isAssigned={assignedPlayerIds.has(p.id)}
                 readOnly={readOnly}
                 onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
-                onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
               />
             ))}
             {skaters.length === 0 && (
@@ -119,7 +114,6 @@ export function RosterPanel({
                   player={p}
                   isAssigned={assignedPlayerIds.has(p.id)}
                   readOnly={readOnly}
-                  onMarkAbsent={onMarkAbsent ? () => onMarkAbsent(p.id) : undefined}
                 />
               ))}
             </div>
@@ -144,7 +138,6 @@ export function RosterPanel({
                   isAssigned={false}
                   isAbsent
                   readOnly={readOnly}
-                  onMarkAvailable={onMarkAvailable ? () => onMarkAvailable(p.id) : undefined}
                 />
               ))}
               {outThisGame.length === 0 && (
