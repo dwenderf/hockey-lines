@@ -17,12 +17,14 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay }: 
     ? `slot-${fromSlot.slotId}-${fromSlot.position}-${player.id}`
     : `roster-overlay-${player.id}`;
 
+  const inactive = !player.is_active;
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: draggableId,
     data: fromSlot
       ? { type: 'slot-player', playerId: player.id, fromSlot }
       : { type: 'roster-player', playerId: player.id },
-    disabled: readOnly || isOverlay,
+    disabled: readOnly || isOverlay || inactive,
   });
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
@@ -31,14 +33,17 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay }: 
     <div
       ref={!isOverlay ? setNodeRef : undefined}
       style={!isOverlay ? style : undefined}
-      className={`flex items-center justify-between gap-1 rounded px-2 py-1 text-xs font-medium bg-white border border-gray-300 shadow-sm w-full ${
-        isDragging ? 'opacity-30' : ''
-      } ${!readOnly && !isOverlay ? 'cursor-grab active:cursor-grabbing' : ''} ${
-        isOverlay ? 'shadow-lg border-blue-400' : ''
-      }`}
-      {...(!readOnly && !isOverlay ? { ...listeners, ...attributes } : {})}
+      className={`flex items-center justify-between gap-1 rounded px-2 py-1 text-xs font-medium border shadow-sm w-full ${
+        inactive ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-white border-gray-300'
+      } ${isDragging ? 'opacity-30' : ''} ${
+        !readOnly && !isOverlay && !inactive ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${isOverlay ? 'shadow-lg border-blue-400' : ''}`}
+      {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
-      <span className="truncate">{player.name}</span>
+      <span className={`truncate ${inactive ? 'line-through text-gray-400' : ''}`}>
+        {player.name}
+        {inactive && <span className="ml-1.5 no-underline not-italic text-gray-400">(inactive)</span>}
+      </span>
       {!readOnly && onRemove && !isOverlay && (
         <button
           onClick={(e) => {
