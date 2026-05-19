@@ -210,14 +210,33 @@ export default function ManagePage() {
       const player = playersById.get(selectedPlayerId);
       if (!player?.is_active || absentPlayerIds.has(selectedPlayerId)) return;
 
-      // Clear the player's current slot if they're already assigned somewhere else.
-      // Kick-back: overwriting the target slot clears the previous occupant automatically.
-      if (placementMap.has(selectedPlayerId)) {
-        updateSlotByRef(placementMap.get(selectedPlayerId)!, null);
+      const sourceSlotRef = placementMap.get(selectedPlayerId) ?? null;
+
+      // Find the current occupant of the target slot (if any).
+      const targetOccupantId = [...placementMap.entries()].find(
+        ([, ref]) => ref.slotId === slotRef.slotId && ref.column === slotRef.column
+      )?.[0] ?? null;
+
+      if (targetOccupantId === selectedPlayerId) {
+        // Tapping own slot — deselect without moving.
+        setIsEditMode(false);
+        setSelectedPlayerId(null);
+        return;
       }
 
-      updateSlotByRef(slotRef, selectedPlayerId);
-      // Placing a player exits edit mode — no need to stay in selection state.
+      if (sourceSlotRef && targetOccupantId) {
+        // Slot → Occupied Slot: swap both players.
+        updateSlotByRef(sourceSlotRef, targetOccupantId);
+        updateSlotByRef(slotRef, selectedPlayerId);
+      } else if (sourceSlotRef) {
+        // Slot → Empty Slot: relocate.
+        updateSlotByRef(sourceSlotRef, null);
+        updateSlotByRef(slotRef, selectedPlayerId);
+      } else {
+        // Carousel → Any Slot: place player; existing occupant is evicted to bench.
+        updateSlotByRef(slotRef, selectedPlayerId);
+      }
+
       setIsEditMode(false);
       setSelectedPlayerId(null);
     },

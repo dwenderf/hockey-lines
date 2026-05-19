@@ -2,7 +2,6 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
-import { useLongPress } from '@/hooks/useLongPress';
 import { PlayerChip } from './PlayerChip';
 import { SLOT_DRAG_COLORS, CHIP_PREFERENCE_COLORS } from '@/lib/constants';
 import type { RosterPlayer, SlotRef, Preference } from '@/lib/types';
@@ -17,7 +16,7 @@ interface PositionSlotProps {
 }
 
 export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove, onTapSlot }: PositionSlotProps) {
-  const { activeDragPlayerId, absentPlayerIds, isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
+  const { activeDragPlayerId, absentPlayerIds, isTouchDevice, isEditMode, selectedPlayerId } = useDragState();
 
   const draggingAbsent = activeDragPlayerId ? absentPlayerIds.has(activeDragPlayerId) : false;
 
@@ -26,16 +25,6 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     data: { type: 'slot', slotRef },
     disabled: readOnly || draggingAbsent,
   });
-
-  // Long-press: enter edit mode AND select the player currently in this slot (if any).
-  // Only register when NOT already in edit mode to avoid interfering with taps.
-  const longPress = useLongPress({
-    onLongPress: () => {
-      setEditMode(true);
-      if (player) setSelectedPlayerId(player.id);
-    },
-  });
-  const longPressProps = isTouchDevice && !readOnly && !isEditMode ? longPress : {};
 
   const selectedPlayer = selectedPlayerId ? playersById.get(selectedPlayerId) : null;
   const highlightPref = selectedPlayer?.positions[slotRef.position];
@@ -85,7 +74,6 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     <div
       ref={setNodeRef}
       onClick={handleClick}
-      {...longPressProps}
       className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${slotClass}`}
     >
       {player ? (

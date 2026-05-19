@@ -24,7 +24,7 @@ const nameClamp: React.CSSProperties = {
 };
 
 export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
-  const { isTouchDevice, isEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
+  const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
 
   const draggableId = fromSlot
     ? `slot-${fromSlot.slotId}-${fromSlot.position}-${player.id}`
@@ -56,11 +56,17 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
     ? 'bg-gray-50 border-gray-200 opacity-60'
     : (preferenceClass ?? 'bg-white border-gray-300');
 
-  // ── Mobile minimal: borderless text only ─────────────────────────────
+  // ── Mobile minimal: borderless text only — tap to select ─────────────
   if (isMobileMinimal) {
+    function handleMinimalTap(e: React.MouseEvent) {
+      e.stopPropagation();
+      setEditMode(true);
+      setSelectedPlayerId(player.id);
+    }
     return (
       <div
-        className="slot-tile w-full px-1 py-0.5 select-none"
+        onClick={handleMinimalTap}
+        className="slot-tile w-full px-1 py-0.5 select-none cursor-pointer"
       >
         <p className="text-xs font-medium leading-tight text-gray-800 text-center" style={nameClamp}>
           {player.name}

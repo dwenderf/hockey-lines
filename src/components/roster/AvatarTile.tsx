@@ -3,7 +3,6 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useDragState } from '@/hooks/useDragState';
-import { useLongPress } from '@/hooks/useLongPress';
 import { PositionDotGrid } from '@/components/lines/PositionDotGrid';
 import type { RosterPlayer } from '@/lib/types';
 
@@ -21,14 +20,6 @@ export function AvatarTile({ player }: AvatarTileProps) {
     disabled: isTouchDevice,
   });
 
-  // Long-press: enter edit mode AND immediately select this player as the active pick
-  const longPress = useLongPress({
-    onLongPress: () => {
-      setEditMode(true);
-      setSelectedPlayerId(player.id);
-    },
-  });
-
   const isSelected = selectedPlayerId === player.id;
 
   const style: React.CSSProperties = {
@@ -39,8 +30,14 @@ export function AvatarTile({ player }: AvatarTileProps) {
   };
 
   function handleClick() {
-    if (!isEditMode) return;
-    setSelectedPlayerId(isSelected ? null : player.id);
+    if (isTouchDevice) {
+      // Any tap enters edit mode and selects the player (or deselects if already selected).
+      setEditMode(true);
+      setSelectedPlayerId(isSelected ? null : player.id);
+    } else {
+      if (!isEditMode) return;
+      setSelectedPlayerId(isSelected ? null : player.id);
+    }
   }
 
   return (
@@ -48,7 +45,6 @@ export function AvatarTile({ player }: AvatarTileProps) {
       ref={setNodeRef}
       style={style}
       onClick={handleClick}
-      {...longPress}
       className={`avatar-tile flex flex-col items-center justify-start rounded-lg border-2 p-1.5 select-none transition-all ${
         isTouchDevice ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
       } ${
