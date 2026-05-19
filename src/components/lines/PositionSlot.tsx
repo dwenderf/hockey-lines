@@ -60,26 +60,31 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     }
   }
 
-  // When occupied and not in a special drag/highlight state, strip the outer frame so
-  // the chip fills the slot boundary cleanly (no "tile inside a box" nesting).
+  // When occupied and not in a special drag/highlight state, remove the outer frame
+  // entirely so the chip fills the slot cleanly (no "tile inside a box" nesting).
+  // border-0 (not border-transparent) is used because border-transparent still
+  // occupies 2px of box-sizing space that would clip the chip.
   const specialState = isHighlighted || isOver || !!dragColorClass;
-  const slotClass = isHighlighted
-    ? 'border-green-400 bg-green-50 animate-pulse cursor-pointer'
+  const slotBorder = isHighlighted
+    ? 'border-2 border-green-400 bg-green-50 animate-pulse cursor-pointer'
     : isOver
-    ? `scale-105 ${dragColorClass || 'border-gray-300 bg-gray-50'}`
-    : dragColorClass        // ← all slots color-coded during a drag
-    ? dragColorClass
+    ? `border-2 border-gray-300 scale-105 ${dragColorClass || 'bg-gray-50'}`
+    : dragColorClass        // ring indicator during desktop drag (occupied or empty)
+    ? `border-0 ${dragColorClass}`
     : player
-    ? 'border-transparent bg-transparent'  // chip fills the slot; no outer frame
-    : 'border-dashed border-gray-200 bg-white';
+    ? 'border-0 bg-transparent'  // occupied, no drag — chip is the only visual element
+    : 'border-2 border-dashed border-gray-200 bg-white';
 
   const outerPad = player && !specialState ? 'p-0' : 'p-1';
+
+  // Keep empty slots the same height as chips on touch so rows don't shrink.
+  const minH = isTouchDevice ? 'min-h-[76px]' : 'min-h-[3rem]';
 
   return (
     <div
       ref={setNodeRef}
       onClick={handleClick}
-      className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 transition-all ${outerPad} ${slotClass}`}
+      className={`relative flex ${minH} min-w-0 w-full items-center rounded-md transition-all ${outerPad} ${slotBorder}`}
     >
       {player ? (
         <PlayerChip

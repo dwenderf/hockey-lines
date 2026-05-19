@@ -19,7 +19,7 @@ interface LineRowProps {
 
 export function LineRow({ slots, playersById, readOnly, onRemoveFromSlot, onTapSlot }: LineRowProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {slots.map((s) => {
         const slotRef: SlotRef = { table: s.table, slotId: s.slotId, column: s.column, position: s.position };
         return (

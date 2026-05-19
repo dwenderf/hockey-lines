@@ -24,7 +24,13 @@ const nameClamp: React.CSSProperties = {
 };
 
 // Height shared by mobile slot chips and carousel tiles.
-const MOBILE_TILE_HEIGHT = 85;
+const MOBILE_TILE_HEIGHT = 76;
+
+/** Split a full name at the first space so it always renders on two lines. */
+function splitName(name: string): [string, string] {
+  const i = name.indexOf(' ');
+  return i === -1 ? [name, ''] : [name.slice(0, i), name.slice(i + 1)];
+}
 
 export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
   const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
@@ -59,6 +65,8 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
   // Fixed height matches the carousel tile. Position-fit border always visible.
   // Dot grid space pre-allocated — opacity controls visibility to prevent layout shifts.
   if (isTouchDevice && isInSlot && !isOverlay) {
+    const [firstName, lastName] = splitName(player.name);
+
     function handleTileTap(e: React.MouseEvent) {
       if (inactive) return;
       // If a *different* player is selected, let the event bubble to PositionSlot
@@ -72,7 +80,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
     return (
       <div
         onClick={handleTileTap}
-        className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 pt-1.5 pb-1 w-full select-none transition-all ${borderedClass} ${
+        className={`slot-tile relative flex flex-col items-center justify-center rounded-lg border-2 px-1.5 py-1 w-full select-none transition-all ${borderedClass} ${
           inactive ? '' : 'cursor-pointer'
         } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
         style={{ height: `${MOBILE_TILE_HEIGHT}px` }}
@@ -89,15 +97,16 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
           </button>
         )}
 
-        {/* Name */}
-        <p className="text-xs font-medium leading-tight text-center w-full" style={nameClamp}>
-          {player.name}
+        {/* Name — forced two-line layout matching carousel tiles */}
+        <p className="text-xs font-medium leading-tight text-center w-full" style={{ wordBreak: 'break-word' }}>
+          {firstName}
+          {lastName && <><br />{lastName}</>}
         </p>
 
         {/* Dot grid — always reserves its space; opacity toggles in edit mode.
             Goalies kept invisible always (no position slots to evaluate). */}
         <div
-          className={`mt-auto transition-opacity duration-150 ${
+          className={`transition-opacity duration-150 ${
             isEditMode && !player.is_goalie ? 'opacity-100' : 'opacity-0'
           }`}
         >

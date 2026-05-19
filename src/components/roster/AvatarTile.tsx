@@ -24,8 +24,8 @@ export function AvatarTile({ player }: AvatarTileProps) {
 
   const style: React.CSSProperties = {
     ...(transform ? { transform: CSS.Translate.toString(transform) } : {}),
-    width: '85px',
-    height: '85px',
+    width: '76px',
+    height: '76px',
     flexShrink: 0,
   };
 
@@ -55,17 +55,16 @@ export function AvatarTile({ player }: AvatarTileProps) {
           : 'border-gray-200 bg-white'
       }`}
     >
+      {/* Force first/last name onto separate lines to match grid chip layout */}
       <p
         className="text-center text-xs font-medium leading-tight w-full"
-        style={{
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          wordBreak: 'break-word',
-        }}
+        style={{ wordBreak: 'break-word' }}
       >
-        {player.name}
+        {(() => {
+          const i = player.name.indexOf(' ');
+          if (i === -1) return player.name;
+          return <>{player.name.slice(0, i)}<br />{player.name.slice(i + 1)}</>;
+        })()}
       </p>
       <PositionDotGrid positions={player.positions} />
     </div>

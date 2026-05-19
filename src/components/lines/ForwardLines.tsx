@@ -15,7 +15,7 @@ interface ForwardLinesProps {
 export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot }: ForwardLinesProps) {
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
+      <div className="grid grid-cols-3 gap-2 mb-2">
         {FORWARD_POSITIONS.map((pos) => (
           <div key={pos} className="flex-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
             {pos}
