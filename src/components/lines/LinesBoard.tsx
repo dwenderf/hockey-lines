@@ -48,7 +48,6 @@ export function LinesBoard({
           showDots={showDots}
         />
       </div>
-      <hr className="border-gray-200" />
       <div>
         <DefenseLines
           slots={defenseSlots}

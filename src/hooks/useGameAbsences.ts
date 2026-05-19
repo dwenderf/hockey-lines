@@ -24,17 +24,25 @@ export function useGameAbsences(gameId: string | null) {
   useEffect(() => {
     if (!gameId) return;
     const supabase = createClient();
+    // INSERT: filter by game_id works fine (payload.new has all columns).
+    // DELETE: Supabase only includes the primary key in payload.old by default
+    // (REPLICA IDENTITY DEFAULT), so a game_id filter silently drops DELETE events.
+    // Use a separate unfiltered DELETE subscription and match by primary key.
     const channel = supabase
       .channel(`game-absences-${gameId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'game_absences', filter: `game_id=eq.${gameId}` },
+        { event: 'INSERT', schema: 'public', table: 'game_absences', filter: `game_id=eq.${gameId}` },
         (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setAbsences((prev) => [...prev, payload.new as GameAbsence]);
-          } else if (payload.eventType === 'DELETE') {
-            setAbsences((prev) => prev.filter((a) => a.id !== payload.old.id));
-          }
+          setAbsences((prev) => [...prev, payload.new as GameAbsence]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'game_absences' },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          setAbsences((prev) => prev.filter((a) => a.id !== deletedId));
         }
       )
       .subscribe();

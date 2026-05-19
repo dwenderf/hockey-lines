@@ -88,10 +88,15 @@ export default function PublicGamePage() {
         })
         .subscribe();
 
+      // INSERT: filter by game_id works. DELETE: game_id isn't in payload.old without
+      // REPLICA IDENTITY FULL, so the filter drops those events. Use separate subscriptions.
       absenceCh = supabase
         .channel(`pub-absences-${gameId}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'game_absences', filter: `game_id=eq.${gameId}` }, async () => {
-          // Re-fetch on any change — simpler than tracking inserts/deletes in read-only context
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_absences', filter: `game_id=eq.${gameId}` }, (payload) => {
+          setAbsentIds((prev) => [...prev, (payload.new as { player_id: string }).player_id]);
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'game_absences' }, async () => {
+          // Can't filter by game_id on DELETE without REPLICA IDENTITY FULL — re-fetch is safe
           const { data } = await supabase.from('game_absences').select('player_id').eq('game_id', gameId);
           if (data) setAbsentIds(data.map((a) => a.player_id));
         })
