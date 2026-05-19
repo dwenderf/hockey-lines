@@ -303,8 +303,7 @@ export default function ManagePage() {
 
   const handleCollisionCancel = useCallback(() => {
     setCollision(null);
-    // Touch: keep edit mode + selection so the user can tap a different slot.
-    // Desktop: no selection state exists, nothing to preserve.
+    exitEditMode();
   }, []);
 
   const handleLogout = async () => {
