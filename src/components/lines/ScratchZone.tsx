@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 import type { RosterPlayer } from '@/lib/types';
@@ -48,7 +48,6 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
       <div
         ref={setNodeRef}
         onClick={handleClick}
-        style={justReceived ? { '--glow-color': 'rgba(245,158,11,0.6)' } as CSSProperties : undefined}
         className={`min-h-[4rem] rounded-lg border-2 border-dashed p-2 transition-colors ${
           isOver ? 'border-amber-400 bg-amber-50' : 'border-amber-200 bg-amber-50/40'
         } ${justReceived ? 'just-placed' : ''}`}

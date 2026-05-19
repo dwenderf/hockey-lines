@@ -38,13 +38,11 @@ body {
 }
 
 /* ── Flash-glow: player lands in a slot ─────────────────────────────── */
-/* --glow-color is set inline per slot context:                          */
-/*   forward slots  → rgba(34,197,94,0.6)  (green)                      */
-/*   defense slots  → rgba(59,130,246,0.6) (blue)                       */
-/*   scratch zone   → rgba(245,158,11,0.6) (amber)                      */
+/* Single amber glow — distinct from all three preference colors.        */
+/* No transform: keeps clear of transition-all which would compete.      */
 @keyframes landing-flash {
-  0%   { box-shadow: 0 0 18px 2px var(--glow-color, rgba(34,197,94,0.5)); transform: scale(1.02); }
-  100% { box-shadow: none; transform: scale(1); }
+  0%   { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.8), 0 0 18px 4px rgba(245, 158, 11, 0.4); }
+  100% { box-shadow: none; }
 }
 
 .just-placed {
