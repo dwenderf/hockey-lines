@@ -259,7 +259,7 @@ export default function ManagePage() {
         onDragEnd={handleDragEnd}
       >
         <div
-          className={`flex h-screen flex-col bg-gray-100 ${isEditMode ? 'edit-mode-active' : ''}`}
+          className="flex h-screen flex-col bg-gray-100"
           onClick={(e) => {
             if (isEditMode && e.target === e.currentTarget) exitEditMode();
           }}

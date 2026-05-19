@@ -15,7 +15,6 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <span className="w-5" />
         {DEFENSE_POSITIONS.map((pos) => (
           <div key={pos} className="flex-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
             {pos}
@@ -26,7 +25,6 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
         {slots.map((slot) => (
           <LineRow
             key={slot.id}
-            lineNumber={slot.line_number}
             playersById={playersById}
             readOnly={readOnly}
             onRemoveFromSlot={onRemoveFromSlot}
