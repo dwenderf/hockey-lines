@@ -82,4 +82,5 @@ export type DroppableData =
   | { type: 'roster' }
   | { type: 'inactive-section' }
   | { type: 'skaters-section' }
-  | { type: 'out-this-game' };
+  | { type: 'out-this-game' }
+  | { type: 'scratched-zone' };

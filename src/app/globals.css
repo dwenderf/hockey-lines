@@ -24,3 +24,70 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ── Slot tile entry animation (touch only) ────────────────────────── */
+@keyframes tile-enter {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (pointer: coarse) {
+  .slot-tile {
+    animation: tile-enter 0.2s ease-out;
+  }
+}
+
+/* ── Flash-glow: player lands in a slot ─────────────────────────────── */
+/* Single amber glow — distinct from all three preference colors.        */
+/* No transform: keeps clear of transition-all which would compete.      */
+@keyframes landing-flash {
+  0%   { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.8), 0 0 18px 4px rgba(245, 158, 11, 0.4); }
+  100% { box-shadow: none; }
+}
+
+.just-placed {
+  animation: landing-flash 0.9s ease-out forwards;
+}
+
+/* ── Carousel ping: player returned to bench ────────────────────────── */
+@keyframes carousel-ping {
+  0%   { background-color: rgba(245, 158, 11, 0.12); }
+  100% { background-color: transparent; }
+}
+
+.carousel-pinging {
+  animation: carousel-ping 1s ease-out forwards;
+}
+
+/* ── Mobile / touch show-hide helpers ──────────────────────────────── */
+@media (pointer: coarse) {
+  .mobile-hide { display: none !important; }
+  .mobile-show { display: block !important; }
+}
+
+/* ── Mobile / touch layout ──────────────────────────────────────────── */
+@media (pointer: coarse) {
+  .manage-layout {
+    flex-direction: column !important;
+  }
+
+  .roster-sidebar {
+    display: none !important;
+  }
+
+  .lines-main {
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .bench-carousel-wrapper {
+    display: block !important;
+    flex-shrink: 0;
+    height: 90px;
+    overflow: hidden;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+  }
+}
+

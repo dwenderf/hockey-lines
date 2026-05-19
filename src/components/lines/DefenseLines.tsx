@@ -1,6 +1,10 @@
-import { LineRow } from './LineRow';
+import { PositionSlot } from './PositionSlot';
 import type { RosterPlayer, DefenseLineSlot, SlotRef } from '@/lib/types';
 import { DEFENSE_POSITIONS, POSITION_TO_COLUMN } from '@/lib/constants';
+
+// Defense uses a 4-track grid so the two slots sit under the wings of the
+// forward rows:  1fr [LD 2fr] [RD 2fr] 1fr
+const DEFENSE_GRID = '[grid-template-columns:1fr_2fr_2fr_1fr]';
 
 interface DefenseLinesProps {
   slots: DefenseLineSlot[];
@@ -8,37 +12,50 @@ interface DefenseLinesProps {
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
+  onTapSlot?: (slotRef: SlotRef) => void;
+  showDots?: boolean;
 }
 
-export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine }: DefenseLinesProps) {
+export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, showDots }: DefenseLinesProps) {
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="w-5" />
+      {/* Header row — spacers in col 0 and col 3 align labels with the slots */}
+      <div className={`grid gap-2 mb-2 ${DEFENSE_GRID}`}>
+        <div />
         {DEFENSE_POSITIONS.map((pos) => (
-          <div key={pos} className="flex-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <div key={pos} className="text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
             {pos}
           </div>
         ))}
+        <div />
       </div>
+
       <div className="space-y-1.5">
         {slots.map((slot) => (
-          <LineRow
-            key={slot.id}
-            lineNumber={slot.line_number}
-            playersById={playersById}
-            readOnly={readOnly}
-            onRemoveFromSlot={onRemoveFromSlot}
-            slots={DEFENSE_POSITIONS.map((pos) => ({
-              position: pos,
-              slotId: slot.id,
-              column: POSITION_TO_COLUMN[pos],
-              table: 'defense_line_slots' as const,
-              playerId: slot[POSITION_TO_COLUMN[pos] as keyof DefenseLineSlot] as string | null,
-            }))}
-          />
+          <div key={slot.id} className={`grid gap-2 ${DEFENSE_GRID}`}>
+            <div /> {/* left spacer */}
+            {DEFENSE_POSITIONS.map((pos) => {
+              const col = POSITION_TO_COLUMN[pos];
+              const playerId = slot[col as keyof DefenseLineSlot] as string | null;
+              const slotRef: SlotRef = { table: 'defense_line_slots', slotId: slot.id, column: col, position: pos };
+              return (
+                <PositionSlot
+                  key={pos}
+                  slotRef={slotRef}
+                  player={playerId ? (playersById.get(playerId) ?? null) : null}
+                  playersById={playersById}
+                  readOnly={readOnly}
+                  onRemove={onRemoveFromSlot ? () => onRemoveFromSlot(slotRef) : undefined}
+                  onTapSlot={onTapSlot ? () => onTapSlot(slotRef) : undefined}
+                  showDots={showDots}
+                />
+              );
+            })}
+            <div /> {/* right spacer */}
+          </div>
         ))}
       </div>
+
       {!readOnly && onAddLine && slots.length < 4 && (
         <button
           onClick={onAddLine}

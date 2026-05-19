@@ -10,17 +10,17 @@ interface SlotDef {
 }
 
 interface LineRowProps {
-  lineNumber: number;
   slots: SlotDef[];
   playersById: Map<string, RosterPlayer>;
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
+  onTapSlot?: (slotRef: SlotRef) => void;
+  showDots?: boolean;
 }
 
-export function LineRow({ lineNumber, slots, playersById, readOnly, onRemoveFromSlot }: LineRowProps) {
+export function LineRow({ slots, playersById, readOnly, onRemoveFromSlot, onTapSlot, showDots }: LineRowProps) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-5 shrink-0 text-center text-xs font-bold text-gray-400">{lineNumber}</span>
+    <div className="grid grid-cols-3 gap-2">
       {slots.map((s) => {
         const slotRef: SlotRef = { table: s.table, slotId: s.slotId, column: s.column, position: s.position };
         return (
@@ -31,6 +31,8 @@ export function LineRow({ lineNumber, slots, playersById, readOnly, onRemoveFrom
             playersById={playersById}
             readOnly={readOnly}
             onRemove={onRemoveFromSlot ? () => onRemoveFromSlot(slotRef) : undefined}
+            onTapSlot={onTapSlot ? () => onTapSlot(slotRef) : undefined}
+            showDots={showDots}
           />
         );
       })}
