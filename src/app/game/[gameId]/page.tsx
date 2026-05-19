@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createPublicClient } from '@/lib/supabase/client';
 import { DragStateContext } from '@/hooks/useDragState';
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
 import { LinesBoard } from '@/components/lines/LinesBoard';
@@ -33,12 +33,12 @@ export default function PublicGamePage() {
   const [forwardSlots, setForwardSlots] = useState<ForwardLineSlot[]>([]);
   const [defenseSlots, setDefenseSlots] = useState<DefenseLineSlot[]>([]);
   const [absentIds, setAbsentIds]     = useState<string[]>([]);
-  const [status, setStatus]           = useState<'loading' | 'not-found' | 'unpublished' | 'ready'>('loading');
+  const [status, setStatus]           = useState<'loading' | 'not-found' | 'unpublished' | 'error' | 'ready'>('loading');
   const [showDots, setShowDots]       = useState(false);
 
   // ── Data fetching ─────────────────────────────────────────────────────
   useEffect(() => {
-    const supabase = createClient();
+    const supabase = createPublicClient();
     let forwardCh: ReturnType<typeof supabase.channel> | null = null;
     let defenseCh: ReturnType<typeof supabase.channel> | null = null;
     let absenceCh: ReturnType<typeof supabase.channel> | null = null;
@@ -109,7 +109,7 @@ export default function PublicGamePage() {
         .subscribe();
     };
 
-    init();
+    init().catch(() => setStatus('error'));
     return () => {
       forwardCh?.unsubscribe();
       defenseCh?.unsubscribe();
@@ -160,6 +160,13 @@ export default function PublicGamePage() {
       </main>
     );
   }
+  if (status === 'error') {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <p className="text-gray-500">Unable to load lines. Try refreshing the page.</p>
+      </main>
+    );
+  }
   if (status === 'not-found') {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -191,7 +198,7 @@ export default function PublicGamePage() {
               </>
             )}
           </div>
-          <a href="/login" className="text-xs text-gray-400 hover:text-gray-600">Captain</a>
+          <a href="/manage" className="text-xs text-gray-400 hover:text-gray-600">Captain</a>
         </header>
 
         {/* Sub-header — Show Positions toggle */}
