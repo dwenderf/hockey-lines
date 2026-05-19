@@ -24,7 +24,7 @@ const nameClamp: React.CSSProperties = {
 };
 
 export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
-  const { isTouchDevice, isEditMode } = useDragState();
+  const { isTouchDevice, isEditMode, activeDragPlayerId } = useDragState();
 
   const draggableId = fromSlot
     ? `slot-${fromSlot.slotId}-${fromSlot.position}-${player.id}`
@@ -75,10 +75,17 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   // ── Mobile edit mode: centered avatar-style card + iOS badge ×  ──────
   if (isMobileEditSlot) {
+    // Pause the jiggle animation the instant ANY drag starts — keeps bounding
+    // rects stable so dnd-kit can activate and track the drag cleanly.
+    const editStyle: React.CSSProperties = {
+      ...(style ?? {}),
+      animationPlayState: activeDragPlayerId ? 'paused' : 'running',
+    };
+
     return (
       <div
         ref={setNodeRef}
-        style={style}
+        style={editStyle}
         className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 py-1.5 shadow-sm w-full select-none ${borderedClass} ${
           isDragging ? 'opacity-30' : ''
         } ${!readOnly && !inactive ? 'cursor-grab active:cursor-grabbing' : ''}`}

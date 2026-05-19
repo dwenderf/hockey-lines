@@ -27,7 +27,10 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     disabled: readOnly || draggingAbsent,
   });
 
+  // Only register long-press when NOT already in edit mode — reduces event noise
+  // during jiggle mode and prevents interference with drag gestures.
   const longPress = useLongPress({ onLongPress: () => setEditMode(true) });
+  const longPressProps = isTouchDevice && !readOnly && !isEditMode ? longPress : {};
 
   const selectedPlayer = selectedPlayerId ? playersById.get(selectedPlayerId) : null;
   const highlightPref = selectedPlayer?.positions[slotRef.position];
@@ -46,6 +49,8 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     }
   }
 
+  // Compute drag color for this slot based on the dragged player's preference.
+  // Applied to ALL slots (occupied and empty) so the captain can instantly see fit.
   let dragColorClass = '';
   if (activeDragPlayerId && !readOnly && !draggingAbsent) {
     const activePlayer = playersById.get(activeDragPlayerId);
@@ -55,20 +60,22 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     }
   }
 
+  const slotClass = isHighlighted
+    ? 'border-green-400 bg-green-50 animate-pulse cursor-pointer'
+    : isOver
+    ? `scale-105 ${dragColorClass || 'border-gray-300 bg-gray-50'}`
+    : dragColorClass        // ← occupied AND empty slots both light up during a drag
+    ? dragColorClass
+    : player
+    ? 'border-gray-200 bg-gray-50'
+    : 'border-dashed border-gray-200 bg-white';
+
   return (
     <div
       ref={setNodeRef}
       onClick={handleClick}
-      {...(isTouchDevice && !readOnly ? longPress : {})}
-      className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${
-        isHighlighted
-          ? 'border-green-400 bg-green-50 animate-pulse cursor-pointer'
-          : isOver
-          ? `scale-105 ${dragColorClass || 'border-gray-300 bg-gray-50'}`
-          : player
-          ? 'border-gray-200 bg-gray-50'
-          : dragColorClass || 'border-dashed border-gray-200 bg-white'
-      }`}
+      {...longPressProps}
+      className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${slotClass}`}
     >
       {player ? (
         <PlayerChip
