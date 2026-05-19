@@ -15,7 +15,7 @@ interface PlayerChipProps {
   preferenceClass?: string;
 }
 
-const nameStyle: React.CSSProperties = {
+const nameClamp: React.CSSProperties = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
@@ -43,22 +43,20 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
 
-  // Mobile "minimal" = in a slot, touch device, not in edit mode, not inactive, not overlay
   const isMobileMinimal = isTouchDevice && !isEditMode && isInSlot && !inactive;
+  const isMobileEditSlot = isTouchDevice && isEditMode && isInSlot && !isOverlay;
 
-  // On desktop: always show remove. On touch: only in edit mode.
   const showRemove = onRemove && !readOnly && !isOverlay && (!isTouchDevice || isEditMode);
-
-  // Show dot grid: touch + edit mode + in a slot + not goalie
   const showDotGrid = isTouchDevice && isEditMode && isInSlot && !player.is_goalie;
 
-  // Bordered card style — used on desktop always, and on mobile in edit mode / overlay
   const borderedClass = inactive
     ? 'bg-gray-50 border-gray-200 opacity-60'
     : (preferenceClass ?? 'bg-white border-gray-300');
 
+  const dragAttrs = !readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {};
+
+  // ── Mobile minimal: borderless text only ─────────────────────────────
   if (isMobileMinimal) {
-    // Clean, borderless, text-only — just enough to read the name in the slot
     return (
       <div
         ref={setNodeRef}
@@ -66,43 +64,72 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
         className={`slot-tile w-full px-1 py-0.5 select-none ${isDragging ? 'opacity-30' : ''} ${
           !readOnly && !inactive ? 'cursor-grab active:cursor-grabbing' : ''
         }`}
-        {...(!readOnly && !inactive ? { ...listeners, ...attributes } : {})}
+        {...dragAttrs}
       >
-        <p
-          className="text-xs font-medium leading-tight text-gray-800 text-center"
-          style={nameStyle}
-        >
+        <p className="text-xs font-medium leading-tight text-gray-800 text-center" style={nameClamp}>
           {player.name}
         </p>
       </div>
     );
   }
 
+  // ── Mobile edit mode: centered avatar-style card + iOS badge ×  ──────
+  if (isMobileEditSlot) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 py-1.5 shadow-sm w-full select-none ${borderedClass} ${
+          isDragging ? 'opacity-30' : ''
+        } ${!readOnly && !inactive ? 'cursor-grab active:cursor-grabbing' : ''}`}
+        {...dragAttrs}
+      >
+        {/* iOS-style circular badge — overflows top-right corner */}
+        {showRemove && (
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onRemove!(); }}
+            className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-gray-700 text-white flex items-center justify-center text-base font-bold shadow-md z-10 select-none"
+            style={{ lineHeight: 1 }}
+          >
+            ×
+          </button>
+        )}
+        {/* Centered name — matches AvatarTile style */}
+        <p
+          className="text-xs font-medium leading-tight text-center w-full mt-0.5"
+          style={nameClamp}
+        >
+          {player.name}
+        </p>
+        {showDotGrid && <PositionDotGrid positions={player.positions} />}
+      </div>
+    );
+  }
+
+  // ── Desktop / overlay: horizontal layout with inline × ───────────────
   return (
     <div
       ref={!isOverlay ? setNodeRef : undefined}
       style={!isOverlay ? style : undefined}
       className={`slot-tile flex flex-col gap-0.5 rounded-lg border-2 px-2 py-1.5 text-sm font-medium shadow-sm w-full select-none ${borderedClass} ${
         isDragging ? 'opacity-30' : ''
-      } ${
-        !readOnly && !isOverlay && !inactive ? 'cursor-grab active:cursor-grabbing' : ''
-      } ${isOverlay ? 'shadow-lg' : ''}`}
+      } ${!readOnly && !isOverlay && !inactive ? 'cursor-grab active:cursor-grabbing' : ''} ${
+        isOverlay ? 'shadow-lg' : ''
+      }`}
       {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
       <div className="flex items-start justify-between gap-1">
         <p
           className={`text-xs font-medium leading-tight flex-1 ${inactive ? 'line-through text-gray-400' : ''}`}
-          style={nameStyle}
+          style={nameClamp}
         >
           {player.name}
           {inactive && <span className="ml-1 no-underline not-italic text-gray-400">(inactive)</span>}
         </p>
         {showRemove && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove!();
-            }}
+            onClick={(e) => { e.stopPropagation(); onRemove!(); }}
             className="shrink-0 text-gray-400 hover:text-red-500 leading-none mt-0.5"
           >
             ×
