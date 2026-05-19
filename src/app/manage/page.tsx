@@ -54,6 +54,7 @@ export default function ManagePage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showDots, setShowDots] = useState(false);
   const isTouchDevice = useIsTouchDevice();
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
@@ -391,8 +392,25 @@ export default function ManagePage() {
                   + Game
                 </Button>
               </div>
-              {/* Desktop-only publish controls */}
-              <div className="flex items-center gap-2 shrink-0 mobile-hide">
+              {/* Desktop-only publish controls + show positions toggle */}
+              <div className="flex items-center gap-3 shrink-0 mobile-hide">
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                  <span>Show Preferred Positions</span>
+                  <button
+                    role="switch"
+                    aria-checked={showDots}
+                    onClick={() => setShowDots((v) => !v)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                      showDots ? 'bg-blue-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                        showDots ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </label>
                 {selectedGame && (
                   selectedGame.is_published ? (
                     <>
@@ -491,6 +509,7 @@ export default function ManagePage() {
                   onTapSlot={handleTapToPlace}
                   onReturnFromScratch={markAvailable}
                   onTapScratch={handleTapToScratch}
+                  showDots={showDots}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-400">

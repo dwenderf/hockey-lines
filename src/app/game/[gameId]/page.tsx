@@ -197,7 +197,7 @@ export default function PublicGamePage() {
         {/* Sub-header — Show Positions toggle */}
         <div className="border-b border-gray-100 bg-white px-6 py-2 flex items-center justify-end flex-shrink-0">
           <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-            <span>Show positions</span>
+            <span>Show Preferred Positions</span>
             <button
               role="switch"
               aria-checked={showDots}

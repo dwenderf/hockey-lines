@@ -114,7 +114,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
             Goalies always invisible (no position slots to evaluate). */}
         <div
           className={`transition-opacity duration-200 ${
-            !player.is_goalie && (readOnly ? !!showDots : !!selectedPlayerId) ? 'opacity-100' : 'opacity-0'
+            !player.is_goalie && (!!showDots || (!readOnly && !!selectedPlayerId)) ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <PositionDotGrid positions={player.positions} />
@@ -126,7 +126,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
   // ── Desktop / overlay chip ────────────────────────────────────────────
   // Dot grid shown when a drag is active (captain view) or toggle is on (player view).
   // Overlay skips the dot grid since it floats detached from any slot context.
-  const showDesktopDots = !isOverlay && !player.is_goalie && (readOnly ? !!showDots : !!activeDragPlayerId);
+  const showDesktopDots = !isOverlay && !player.is_goalie && (!!showDots || (!readOnly && !!activeDragPlayerId));
 
   return (
     <div

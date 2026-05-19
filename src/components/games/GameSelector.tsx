@@ -26,12 +26,6 @@ export function GameSelector({ games, selectedGameId, onSelect }: GameSelectorPr
 
   return (
     <div className="flex items-center gap-2">
-      {selectedGame && (
-        <span
-          className={`h-2 w-2 rounded-full shrink-0 ${selectedGame.is_published ? 'bg-green-400' : 'bg-amber-400'}`}
-          title={selectedGame.is_published ? 'Published' : 'Draft'}
-        />
-      )}
       <select
         value={selectedGameId ?? ''}
         onChange={(e) => onSelect(e.target.value)}
