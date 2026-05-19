@@ -24,7 +24,7 @@ const nameClamp: React.CSSProperties = {
 };
 
 export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
-  const { isTouchDevice, isEditMode, activeDragPlayerId } = useDragState();
+  const { isTouchDevice, isEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
 
   const draggableId = fromSlot
     ? `slot-${fromSlot.slotId}-${fromSlot.position}-${player.id}`
@@ -32,13 +32,15 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   const inactive = !player.is_active;
   const isInSlot = !!fromSlot && !isOverlay;
+  const isSelected = selectedPlayerId === player.id;
 
+  // Drag is disabled on touch devices — tap-to-place handles placement instead.
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: draggableId,
     data: fromSlot
       ? { type: 'slot-player', playerId: player.id, fromSlot }
       : { type: 'roster-player', playerId: player.id },
-    disabled: readOnly || isOverlay || inactive,
+    disabled: readOnly || isOverlay || inactive || isTouchDevice,
   });
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
@@ -53,18 +55,11 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
     ? 'bg-gray-50 border-gray-200 opacity-60'
     : (preferenceClass ?? 'bg-white border-gray-300');
 
-  const dragAttrs = !readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {};
-
   // ── Mobile minimal: borderless text only ─────────────────────────────
   if (isMobileMinimal) {
     return (
       <div
-        ref={setNodeRef}
-        style={style}
-        className={`slot-tile w-full px-1 py-0.5 select-none ${isDragging ? 'opacity-30' : ''} ${
-          !readOnly && !inactive ? 'cursor-grab active:cursor-grabbing' : ''
-        }`}
-        {...dragAttrs}
+        className="slot-tile w-full px-1 py-0.5 select-none"
       >
         <p className="text-xs font-medium leading-tight text-gray-800 text-center" style={nameClamp}>
           {player.name}
@@ -75,21 +70,24 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   // ── Mobile edit mode: centered avatar-style card + iOS badge ×  ──────
   if (isMobileEditSlot) {
-    // Pause the jiggle animation the instant ANY drag starts — keeps bounding
-    // rects stable so dnd-kit can activate and track the drag cleanly.
-    const editStyle: React.CSSProperties = {
-      ...(style ?? {}),
-      animationPlayState: activeDragPlayerId ? 'paused' : 'running',
-    };
+    // Click handler: select/deselect this player.
+    // If a *different* player is already selected, let the event bubble to the
+    // parent PositionSlot, which will call onTapSlot() to place the selection here.
+    function handleChipClick(e: React.MouseEvent) {
+      if (!isEditMode) return;
+      if (selectedPlayerId && selectedPlayerId !== player.id) return; // bubble to slot
+      e.stopPropagation();
+      setSelectedPlayerId(isSelected ? null : player.id);
+    }
 
     return (
       <div
         ref={setNodeRef}
-        style={editStyle}
-        className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 py-1.5 shadow-sm w-full select-none ${borderedClass} ${
+        style={style}
+        onClick={handleChipClick}
+        className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 py-1.5 shadow-sm w-full select-none cursor-pointer transition-all ${borderedClass} ${
           isDragging ? 'opacity-30' : ''
-        } ${!readOnly && !inactive ? 'cursor-grab active:cursor-grabbing' : ''}`}
-        {...dragAttrs}
+        } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
       >
         {/* iOS-style circular badge — overflows top-right corner */}
         {showRemove && (

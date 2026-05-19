@@ -6,7 +6,6 @@ import {
   DragOverlay,
   PointerSensor,
   KeyboardSensor,
-  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
@@ -61,12 +60,9 @@ export default function ManagePage() {
     setSelectedPlayerId(null);
   }
 
+  // Touch devices use tap-to-place (no drag). PointerSensor handles mouse/trackpad drag on desktop.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    // Touch: must hold 200ms without moving >10px to lift a tile.
-    // Horizontal swipes exceed the tolerance instantly → native carousel scroll handles them.
-    // Once lifted, dnd-kit locks touch events so the drag clears the carousel cleanly.
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 10 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -211,10 +207,19 @@ export default function ManagePage() {
   const handleTapToPlace = useCallback(
     (slotRef: SlotRef) => {
       if (!selectedPlayerId) return;
+      const player = playersById.get(selectedPlayerId);
+      if (!player?.is_active || absentPlayerIds.has(selectedPlayerId)) return;
+
+      // Clear the player's current slot if they're already assigned somewhere else.
+      // Kick-back: overwriting the target slot clears the previous occupant automatically.
+      if (placementMap.has(selectedPlayerId)) {
+        updateSlotByRef(placementMap.get(selectedPlayerId)!, null);
+      }
+
       updateSlotByRef(slotRef, selectedPlayerId);
       setSelectedPlayerId(null);
     },
-    [selectedPlayerId, updateSlotByRef]
+    [selectedPlayerId, playersById, absentPlayerIds, placementMap, updateSlotByRef]
   );
 
   const handleTapToScratch = useCallback(() => {

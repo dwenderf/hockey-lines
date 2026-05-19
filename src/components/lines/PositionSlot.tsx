@@ -17,7 +17,7 @@ interface PositionSlotProps {
 }
 
 export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove, onTapSlot }: PositionSlotProps) {
-  const { activeDragPlayerId, absentPlayerIds, isTouchDevice, isEditMode, setEditMode, selectedPlayerId } = useDragState();
+  const { activeDragPlayerId, absentPlayerIds, isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
 
   const draggingAbsent = activeDragPlayerId ? absentPlayerIds.has(activeDragPlayerId) : false;
 
@@ -27,23 +27,34 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     disabled: readOnly || draggingAbsent,
   });
 
-  // Only register long-press when NOT already in edit mode — reduces event noise
-  // during jiggle mode and prevents interference with drag gestures.
-  const longPress = useLongPress({ onLongPress: () => setEditMode(true) });
+  // Long-press: enter edit mode AND select the player currently in this slot (if any).
+  // Only register when NOT already in edit mode to avoid interfering with taps.
+  const longPress = useLongPress({
+    onLongPress: () => {
+      setEditMode(true);
+      if (player) setSelectedPlayerId(player.id);
+    },
+  });
   const longPressProps = isTouchDevice && !readOnly && !isEditMode ? longPress : {};
 
   const selectedPlayer = selectedPlayerId ? playersById.get(selectedPlayerId) : null;
   const highlightPref = selectedPlayer?.positions[slotRef.position];
+  // Highlight empty slots that are compatible with the selected player.
+  // Occupied slots don't pulse but are still tappable (click bubbles from the chip).
   const isHighlighted =
     !readOnly &&
     isEditMode &&
     !!selectedPlayerId &&
+    selectedPlayerId !== player?.id &&  // don't highlight the slot the selected player is already in
     !player &&
     (highlightPref === 'preferred' || highlightPref === 'acceptable');
 
   function handleClick(e: React.MouseEvent) {
     if (readOnly) return;
-    if (isEditMode && !player && selectedPlayerId && onTapSlot) {
+    // Place the selected player into this slot (works for empty OR occupied slots).
+    // The PlayerChip inside an occupied slot bubbles the event up when a *different*
+    // player is selected, so we naturally reach here only in that case.
+    if (isEditMode && selectedPlayerId && onTapSlot) {
       e.stopPropagation();
       onTapSlot();
     }

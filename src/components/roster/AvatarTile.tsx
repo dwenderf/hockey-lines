@@ -12,14 +12,22 @@ interface AvatarTileProps {
 }
 
 export function AvatarTile({ player }: AvatarTileProps) {
-  const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
+  const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, isTouchDevice } = useDragState();
 
+  // Drag is desktop-only. On touch, players are placed via tap-to-place.
   const { setNodeRef, transform, isDragging } = useDraggable({
     id: `roster-${player.id}`,
     data: { type: 'roster-player', playerId: player.id },
+    disabled: isTouchDevice,
   });
 
-  const longPress = useLongPress({ onLongPress: () => setEditMode(true) });
+  // Long-press: enter edit mode AND immediately select this player as the active pick
+  const longPress = useLongPress({
+    onLongPress: () => {
+      setEditMode(true);
+      setSelectedPlayerId(player.id);
+    },
+  });
 
   const isSelected = selectedPlayerId === player.id;
 
@@ -41,10 +49,14 @@ export function AvatarTile({ player }: AvatarTileProps) {
       style={style}
       onClick={handleClick}
       {...longPress}
-      className={`avatar-tile flex flex-col items-center justify-start rounded-lg border-2 p-1.5 cursor-grab active:cursor-grabbing select-none transition-all ${
+      className={`avatar-tile flex flex-col items-center justify-start rounded-lg border-2 p-1.5 select-none transition-all ${
+        isTouchDevice ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
+      } ${
         isDragging ? 'opacity-30' : ''
       } ${
-        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+        isSelected
+          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-400 ring-offset-1'
+          : 'border-gray-200 bg-white'
       }`}
     >
       <p
