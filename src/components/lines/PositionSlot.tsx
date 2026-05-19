@@ -34,26 +34,27 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
 
   const isValidTarget   = baseCondition && (highlightPref === 'preferred' || highlightPref === 'acceptable');
   const isRefusedTarget = baseCondition && highlightPref === 'refused';
-  const isDefenseSlot   = slotRef.position === 'LD' || slotRef.position === 'RD';
+  const isPreferred     = highlightPref === 'preferred';
 
   // Empty targets → pulsing background layer (text stays static).
   // Occupied targets → steady ring (no animation to avoid flashing chip content).
   const isEmptyPulse    = (isValidTarget || isRefusedTarget) && !player;
   const isOccupiedRing  = (isValidTarget || isRefusedTarget) && !!player;
 
-  // Color tokens per target type
+  // Color tokens driven by preference tier (matches dot grid colors):
+  //   preferred → green, acceptable → blue, refused → red
   const pulseLayerClass = isEmptyPulse
     ? (isRefusedTarget
       ? 'absolute inset-0 rounded-md border-2 border-dashed border-red-400 bg-red-50 animate-pulse pointer-events-none'
-      : isDefenseSlot
-        ? 'absolute inset-0 rounded-md border-2 border-dashed border-blue-400 bg-blue-50 animate-pulse pointer-events-none'
-        : 'absolute inset-0 rounded-md border-2 border-dashed border-green-400 bg-green-50 animate-pulse pointer-events-none')
+      : isPreferred
+        ? 'absolute inset-0 rounded-md border-2 border-dashed border-green-400 bg-green-50 animate-pulse pointer-events-none'
+        : 'absolute inset-0 rounded-md border-2 border-dashed border-blue-400 bg-blue-50 animate-pulse pointer-events-none')
     : '';
 
   const steadyRing = isOccupiedRing
     ? (isRefusedTarget
       ? 'ring-2 ring-red-400'
-      : isDefenseSlot ? 'ring-2 ring-blue-400' : 'ring-2 ring-green-400')
+      : isPreferred ? 'ring-2 ring-green-400' : 'ring-2 ring-blue-400')
     : '';
 
   function handleClick(e: React.MouseEvent) {
