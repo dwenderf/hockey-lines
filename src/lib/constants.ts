@@ -15,18 +15,17 @@ export const PREFERENCE_COLORS: Record<Preference, string> = {
 /**
  * Returns the Tailwind border + background classes for an assigned player chip.
  *
- * Color is determined by SLOT TYPE, not preference tier:
- *   • Forward slots (LW / C / RW) + fit (preferred or acceptable) → green
- *   • Defense slots (LD / RD)     + fit (preferred or acceptable) → blue
- *   • Any slot + refused (out of position)                        → amber
- *   • Any slot + unset (no preference recorded)                   → gray
+ * Color is determined by PREFERENCE TIER, matching the dot grid:
+ *   • preferred → green  (player wants this position)
+ *   • acceptable → blue  (player can play this position)
+ *   • refused → red      (player out of position)
+ *   • unset → gray       (no preference recorded)
  */
-export function getChipClass(pref: Preference, position: Position): string {
-  if (pref === 'refused') return 'bg-red-50 border-red-400';
-  if (pref === 'unset')   return 'bg-gray-50 border-gray-300';
-  return DEFENSE_POSITIONS_SET.has(position)
-    ? 'bg-blue-50 border-blue-400'
-    : 'bg-green-50 border-green-400';
+export function getChipClass(pref: Preference, _position: Position): string {
+  if (pref === 'refused')    return 'bg-red-50 border-red-400';
+  if (pref === 'unset')      return 'bg-gray-50 border-gray-300';
+  if (pref === 'preferred')  return 'bg-green-50 border-green-400';
+  /* acceptable */           return 'bg-blue-50 border-blue-400';
 }
 
 /** @deprecated Use getChipClass(pref, position) instead */
