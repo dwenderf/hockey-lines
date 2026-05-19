@@ -6,19 +6,22 @@ import type { RosterPlayer } from '@/lib/types';
 
 interface ScratchZoneProps {
   scratchedPlayers: RosterPlayer[];
-  onReturnFromScratch: (playerId: string) => void;
+  onReturnFromScratch?: (playerId: string) => void;
   onTapScratch?: () => void;
+  readOnly?: boolean;
 }
 
-export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratch }: ScratchZoneProps) {
+export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratch, readOnly }: ScratchZoneProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'scratch-zone',
     data: { type: 'scratched-zone' },
+    disabled: readOnly,
   });
 
   const { isEditMode, selectedPlayerId } = useDragState();
 
   function handleClick(e: React.MouseEvent) {
+    if (readOnly) return;
     if (isEditMode && selectedPlayerId && onTapScratch) {
       e.stopPropagation();
       onTapScratch();
@@ -45,12 +48,14 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
                 className="flex items-center gap-1 rounded border border-amber-200 bg-white px-2 py-1 text-sm opacity-50"
               >
                 <span className="font-medium">{player.name}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onReturnFromScratch(player.id); }}
-                  className="text-gray-400 hover:text-red-500 leading-none"
-                >
-                  ×
-                </button>
+                {!readOnly && onReturnFromScratch && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onReturnFromScratch(player.id); }}
+                    className="text-gray-400 hover:text-red-500 leading-none"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -8,16 +8,17 @@ import type { RosterPlayer } from '@/lib/types';
 
 interface AvatarTileProps {
   player: RosterPlayer;
+  readOnly?: boolean;
 }
 
-export function AvatarTile({ player }: AvatarTileProps) {
+export function AvatarTile({ player, readOnly }: AvatarTileProps) {
   const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, isTouchDevice } = useDragState();
 
-  // Drag is desktop-only. On touch, players are placed via tap-to-place.
+  // Drag is desktop-only. On touch, players are placed via tap-to-place. Always disabled in read-only view.
   const { setNodeRef, transform, isDragging } = useDraggable({
     id: `roster-${player.id}`,
     data: { type: 'roster-player', playerId: player.id },
-    disabled: isTouchDevice,
+    disabled: isTouchDevice || readOnly,
   });
 
   const isSelected = selectedPlayerId === player.id;
@@ -30,6 +31,7 @@ export function AvatarTile({ player }: AvatarTileProps) {
   };
 
   function handleClick() {
+    if (readOnly) return;
     if (isTouchDevice) {
       // Any tap enters edit mode and selects the player (or deselects if already selected).
       setEditMode(true);

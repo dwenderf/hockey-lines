@@ -60,11 +60,12 @@ export function LinesBoard({
           showDots={showDots}
         />
       </div>
-      {!readOnly && onReturnFromScratch && scratchedPlayers && (
+      {scratchedPlayers && (scratchedPlayers.length > 0 || !readOnly) && (
         <ScratchZone
           scratchedPlayers={scratchedPlayers}
           onReturnFromScratch={onReturnFromScratch}
           onTapScratch={onTapScratch}
+          readOnly={readOnly}
         />
       )}
     </div>
