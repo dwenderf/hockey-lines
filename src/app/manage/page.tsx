@@ -30,7 +30,7 @@ import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
 
 export default function ManagePage() {
   const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
-  const { games, selectedGameId, setSelectedGameId, addGame } = useGames(selectedTeamId);
+  const { games, selectedGameId, setSelectedGameId, addGame, publishGame, unpublishGame } = useGames(selectedTeamId);
   const { players, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
   const { absentPlayerIds, markAbsent, markAvailable } = useGameAbsences(selectedGameId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
@@ -38,6 +38,16 @@ export default function ManagePage() {
 
   const [activeDragPlayerId, setActiveDragPlayerId] = useState<string | null>(null);
   const [showAddGame, setShowAddGame] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
+
+  const copyGameLink = () => {
+    if (!selectedGameId) return;
+    navigator.clipboard.writeText(`${window.location.origin}/game/${selectedGameId}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -197,36 +207,38 @@ export default function ManagePage() {
         <div className="flex h-screen flex-col bg-gray-100">
           {/* Header */}
           <header className="border-b border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between px-4 py-3">
+            {/* Row 1: app title, team, logout */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-lg font-bold text-gray-900">Hockey Lines</h1>
                 {teams.length > 1 && (
-                  <>
-                    <span className="text-gray-300">|</span>
-                    <div className="flex gap-1">
-                      {teams.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => setSelectedTeamId(t.id)}
-                          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                            selectedTeamId === t.id
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          {t.name}
-                        </button>
-                      ))}
-                    </div>
-                  </>
+                  <div className="flex gap-1">
+                    {teams.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTeamId(t.id)}
+                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                          selectedTeamId === t.id
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
                 )}
                 {teams.length === 1 && (
-                  <>
-                    <span className="text-gray-300">|</span>
-                    <span className="text-sm font-medium text-gray-700">{teams[0].name}</span>
-                  </>
+                  <span className="text-sm font-medium text-gray-700">{teams[0].name}</span>
                 )}
-                <span className="text-gray-300">|</span>
+              </div>
+              <Button variant="ghost" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+            {/* Row 2: game selector, add game, publish controls */}
+            <div className="flex items-center justify-between px-4 pb-3">
+              <div className="flex items-center gap-2">
                 <GameSelector
                   games={games}
                   selectedGameId={selectedGameId}
@@ -236,13 +248,23 @@ export default function ManagePage() {
                   + Game
                 </Button>
               </div>
-              <div className="flex items-center gap-3">
-                <a href="/" target="_blank" className="text-xs text-blue-500 hover:underline">
-                  Public view ↗
-                </a>
-                <Button variant="ghost" onClick={handleLogout}>
-                  Logout
-                </Button>
+              <div className="flex items-center gap-2">
+                {selectedGame && (
+                  selectedGame.is_published ? (
+                    <>
+                      <Button variant="secondary" onClick={copyGameLink}>
+                        {copied ? 'Copied!' : 'Copy link'}
+                      </Button>
+                      <Button variant="ghost" onClick={() => unpublishGame(selectedGame.id)}>
+                        Unpublish
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="primary" onClick={() => publishGame(selectedGame.id)}>
+                      Publish lines
+                    </Button>
+                  )
+                )}
               </div>
             </div>
           </header>
