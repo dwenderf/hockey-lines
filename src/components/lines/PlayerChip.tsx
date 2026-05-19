@@ -35,7 +35,7 @@ function splitName(name: string): [string, string] {
 }
 
 export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass, showDots }: PlayerChipProps) {
-  const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
+  const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, activeDragPlayerId } = useDragState();
 
   const draggableId = fromSlot
     ? `slot-${fromSlot.slotId}-${fromSlot.position}-${player.id}`
@@ -123,7 +123,11 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
     );
   }
 
-  // ── Desktop / overlay: horizontal layout with inline × ───────────────
+  // ── Desktop / overlay chip ────────────────────────────────────────────
+  // Dot grid shown when a drag is active (captain view) or toggle is on (player view).
+  // Overlay skips the dot grid since it floats detached from any slot context.
+  const showDesktopDots = !isOverlay && !player.is_goalie && (readOnly ? !!showDots : !!activeDragPlayerId);
+
   return (
     <div
       ref={!isOverlay ? setNodeRef : undefined}
@@ -151,6 +155,10 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
             ×
           </button>
         )}
+      </div>
+      {/* Dot grid — fades in during a drag so the captain can read position fit at a glance */}
+      <div className={`transition-opacity duration-200 ${showDesktopDots ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+        <PositionDotGrid positions={player.positions} />
       </div>
     </div>
   );

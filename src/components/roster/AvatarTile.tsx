@@ -12,7 +12,7 @@ interface AvatarTileProps {
 }
 
 export function AvatarTile({ player, readOnly }: AvatarTileProps) {
-  const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, isTouchDevice } = useDragState();
+  const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, isTouchDevice, activeDragPlayerId } = useDragState();
 
   // Drag is desktop-only. On touch, players are placed via tap-to-place. Always disabled in read-only view.
   const { setNodeRef, transform, isDragging } = useDraggable({
@@ -74,8 +74,8 @@ export function AvatarTile({ player, readOnly }: AvatarTileProps) {
           return <>{player.name.slice(0, i)}<br />{player.name.slice(i + 1)}</>;
         })()}
       </p>
-      {/* Hidden until a player is selected — reveals position matrix for comparison */}
-      <div className={`transition-opacity duration-200 ${!!selectedPlayerId ? 'opacity-100' : 'opacity-0'}`}>
+      {/* Hidden until a player is selected OR a drag is active */}
+      <div className={`transition-opacity duration-200 ${!!selectedPlayerId || !!activeDragPlayerId ? 'opacity-100' : 'opacity-0'}`}>
         <PositionDotGrid positions={player.positions} />
       </div>
     </div>

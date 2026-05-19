@@ -464,8 +464,13 @@ export default function ManagePage() {
           </div>
         </div>
 
+        {/* DragOverlay needs an explicit width — w-full collapses in a portal with no parent constraint */}
         <DragOverlay dropAnimation={null}>
-          {activePlayer ? <PlayerChip player={activePlayer} isOverlay /> : null}
+          {activePlayer ? (
+            <div style={{ width: '180px' }}>
+              <PlayerChip player={activePlayer} isOverlay />
+            </div>
+          ) : null}
         </DragOverlay>
       </DndContext>
 
