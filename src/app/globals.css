@@ -37,6 +37,30 @@ body {
   }
 }
 
+/* ── Flash-glow: player lands in a slot ─────────────────────────────── */
+/* --glow-color is set inline per slot context:                          */
+/*   forward slots  → rgba(34,197,94,0.6)  (green)                      */
+/*   defense slots  → rgba(59,130,246,0.6) (blue)                       */
+/*   scratch zone   → rgba(245,158,11,0.6) (amber)                      */
+@keyframes landing-flash {
+  0%   { box-shadow: 0 0 18px 2px var(--glow-color, rgba(34,197,94,0.5)); transform: scale(1.02); }
+  100% { box-shadow: none; transform: scale(1); }
+}
+
+.just-placed {
+  animation: landing-flash 0.9s ease-out forwards;
+}
+
+/* ── Carousel ping: player returned to bench ────────────────────────── */
+@keyframes carousel-ping {
+  0%   { background-color: rgba(245, 158, 11, 0.12); }
+  100% { background-color: transparent; }
+}
+
+.carousel-pinging {
+  animation: carousel-ping 1s ease-out forwards;
+}
+
 /* ── Mobile / touch show-hide helpers ──────────────────────────────── */
 @media (pointer: coarse) {
   .mobile-hide { display: none !important; }

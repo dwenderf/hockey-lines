@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 import type { RosterPlayer } from '@/lib/types';
@@ -12,6 +13,19 @@ interface ScratchZoneProps {
 }
 
 export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratch, readOnly }: ScratchZoneProps) {
+  // Amber flash when a new player lands in the scratch zone
+  const [justReceived, setJustReceived] = useState(false);
+  const prevCountRef = useRef(scratchedPlayers.length);
+  const isFirstRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRef.current) { isFirstRef.current = false; prevCountRef.current = scratchedPlayers.length; return; }
+    if (scratchedPlayers.length > prevCountRef.current) {
+      setJustReceived(true);
+      setTimeout(() => setJustReceived(false), 900);
+    }
+    prevCountRef.current = scratchedPlayers.length;
+  }, [scratchedPlayers.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { setNodeRef, isOver } = useDroppable({
     id: 'scratch-zone',
     data: { type: 'scratched-zone' },
@@ -34,9 +48,10 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
       <div
         ref={setNodeRef}
         onClick={handleClick}
+        style={justReceived ? { '--glow-color': 'rgba(245,158,11,0.6)' } as CSSProperties : undefined}
         className={`min-h-[4rem] rounded-lg border-2 border-dashed p-2 transition-colors ${
           isOver ? 'border-amber-400 bg-amber-50' : 'border-amber-200 bg-amber-50/40'
-        }`}
+        } ${justReceived ? 'just-placed' : ''}`}
       >
         {scratchedPlayers.length === 0 ? (
           <span className="flex h-full min-h-[3rem] items-center justify-center text-xs text-gray-300 select-none">—</span>

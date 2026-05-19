@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 import { PlayerChip } from './PlayerChip';
@@ -27,6 +28,26 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     disabled: readOnly || draggingAbsent,
   });
 
+  // ── Landing flash ────────────────────────────────────────────────────
+  // Fire when a *different* player arrives in this slot (skip initial page load).
+  const [justPlaced, setJustPlaced] = useState(false);
+  const prevPlayerIdRef = useRef<string | undefined>(undefined);
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      prevPlayerIdRef.current = player?.id;
+      return;
+    }
+    if (player && player.id !== prevPlayerIdRef.current) {
+      setJustPlaced(true);
+      prevPlayerIdRef.current = player.id;
+      const t = setTimeout(() => setJustPlaced(false), 900);
+      return () => clearTimeout(t);
+    }
+    if (!player) prevPlayerIdRef.current = undefined;
+  }, [player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Target detection ────────────────────────────────────────────────
   const selectedPlayer = selectedPlayerId ? playersById.get(selectedPlayerId) : null;
   const highlightPref  = selectedPlayer?.positions[slotRef.position];
@@ -36,6 +57,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
   const isValidTarget   = baseCondition && (highlightPref === 'preferred' || highlightPref === 'acceptable');
   const isRefusedTarget = baseCondition && highlightPref === 'refused';
   const isPreferred     = highlightPref === 'preferred';
+  const isDefenseSlot   = slotRef.position === 'LD' || slotRef.position === 'RD';
 
   // Empty targets → pulsing background layer (text stays static).
   // Occupied targets → steady ring (no animation to avoid flashing chip content).
@@ -99,11 +121,17 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
   const minH    = isTouchDevice ? 'min-h-[76px]' : 'min-h-[3rem]';
   const pointer = (isValidTarget || isRefusedTarget) && !readOnly ? 'cursor-pointer' : '';
 
+  // Glow color: forward slots = green, defense = blue
+  const glowStyle: CSSProperties | undefined = player && justPlaced
+    ? { '--glow-color': isDefenseSlot ? 'rgba(59,130,246,0.6)' : 'rgba(34,197,94,0.6)' } as CSSProperties
+    : undefined;
+
   return (
     <div
       ref={setNodeRef}
       onClick={handleClick}
-      className={`relative flex ${minH} min-w-0 w-full items-center rounded-md transition-all ${outerPad} ${slotBorder} ${pointer}`}
+      style={glowStyle}
+      className={`relative flex ${minH} min-w-0 w-full items-center rounded-md transition-all ${outerPad} ${slotBorder} ${pointer} ${player && justPlaced ? 'just-placed' : ''}`}
     >
       {/* Pulsing background layer — only for EMPTY targets so text never flashes */}
       {isEmptyPulse && (
