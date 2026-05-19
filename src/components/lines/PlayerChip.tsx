@@ -48,7 +48,8 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
   const isMobileMinimal = isTouchDevice && !isEditMode && isInSlot && !inactive;
   const isMobileEditSlot = isTouchDevice && isEditMode && isInSlot && !isOverlay;
 
-  const showRemove = onRemove && !readOnly && !isOverlay && (!isTouchDevice || isEditMode);
+  // Desktop: always show ×. Touch: only show × on the currently-selected chip.
+  const showRemove = onRemove && !readOnly && !isOverlay && (!isTouchDevice || (isEditMode && isSelected));
   const showDotGrid = isTouchDevice && isEditMode && isInSlot && !player.is_goalie;
 
   const borderedClass = inactive

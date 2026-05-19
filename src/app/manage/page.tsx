@@ -217,6 +217,8 @@ export default function ManagePage() {
       }
 
       updateSlotByRef(slotRef, selectedPlayerId);
+      // Placing a player exits edit mode — no need to stay in selection state.
+      setIsEditMode(false);
       setSelectedPlayerId(null);
     },
     [selectedPlayerId, playersById, absentPlayerIds, placementMap, updateSlotByRef]
@@ -231,6 +233,7 @@ export default function ManagePage() {
       updateSlotByRef(placementMap.get(selectedPlayerId)!, null);
     }
     markAbsent(selectedPlayerId);
+    setIsEditMode(false);
     setSelectedPlayerId(null);
   }, [selectedPlayerId, playersById, absentPlayerIds, placementMap, updateSlotByRef, markAbsent]);
 
@@ -292,12 +295,7 @@ export default function ManagePage() {
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {isEditMode && (
-                  <Button variant="primary" onClick={exitEditMode}>
-                    Done
-                  </Button>
-                )}
-                {/* Desktop-only logout */}
+                  {/* Desktop-only logout */}
                 <Button variant="ghost" onClick={handleLogout} className="mobile-hide">
                   Logout
                 </Button>

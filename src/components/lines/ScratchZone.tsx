@@ -18,13 +18,10 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
 
   const { isEditMode, selectedPlayerId } = useDragState();
 
-  // In edit mode with a player selected, the zone becomes a tap target
-  const isTapTarget = isEditMode && !!selectedPlayerId && !!onTapScratch;
-
   function handleClick(e: React.MouseEvent) {
-    if (isTapTarget) {
+    if (isEditMode && selectedPlayerId && onTapScratch) {
       e.stopPropagation();
-      onTapScratch!();
+      onTapScratch();
     }
   }
 
@@ -35,17 +32,11 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
         ref={setNodeRef}
         onClick={handleClick}
         className={`min-h-[4rem] rounded-lg border-2 border-dashed p-2 transition-colors ${
-          isTapTarget
-            ? 'border-amber-500 bg-amber-100 cursor-pointer'
-            : isOver
-            ? 'border-amber-400 bg-amber-50'
-            : 'border-amber-200 bg-amber-50/40'
+          isOver ? 'border-amber-400 bg-amber-50' : 'border-amber-200 bg-amber-50/40'
         }`}
       >
         {scratchedPlayers.length === 0 ? (
-          <p className="py-2 text-center text-xs text-amber-400">
-            {isTapTarget ? 'Tap to scratch selected player' : 'Drag players here to scratch'}
-          </p>
+          <span className="flex h-full min-h-[3rem] items-center justify-center text-xs text-gray-300 select-none">—</span>
         ) : (
           <div className="flex flex-wrap gap-2">
             {scratchedPlayers.map((player) => (
@@ -62,9 +53,6 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
                 </button>
               </div>
             ))}
-            {isTapTarget && (
-              <p className="w-full text-center text-xs text-amber-500 pt-1">Tap to scratch selected player</p>
-            )}
           </div>
         )}
       </div>
