@@ -22,7 +22,7 @@ export const PREFERENCE_COLORS: Record<Preference, string> = {
  *   • Any slot + unset (no preference recorded)                   → gray
  */
 export function getChipClass(pref: Preference, position: Position): string {
-  if (pref === 'refused') return 'bg-amber-50 border-amber-400';
+  if (pref === 'refused') return 'bg-red-50 border-red-400';
   if (pref === 'unset')   return 'bg-gray-50 border-gray-300';
   return DEFENSE_POSITIONS_SET.has(position)
     ? 'bg-blue-50 border-blue-400'
@@ -33,7 +33,7 @@ export function getChipClass(pref: Preference, position: Position): string {
 export const CHIP_PREFERENCE_COLORS: Record<Preference, string> = {
   preferred:  'bg-green-50 border-green-400',
   acceptable: 'bg-blue-50 border-blue-400',
-  refused:    'bg-amber-50 border-amber-400',
+  refused:    'bg-red-50 border-red-400',
   unset:      'bg-gray-50 border-gray-300',
 };
 
