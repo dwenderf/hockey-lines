@@ -13,9 +13,10 @@ interface DefenseLinesProps {
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
   onTapSlot?: (slotRef: SlotRef) => void;
+  showDots?: boolean;
 }
 
-export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot }: DefenseLinesProps) {
+export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, showDots }: DefenseLinesProps) {
   return (
     <div>
       {/* Header row — spacers in col 0 and col 3 align labels with the slots */}
@@ -46,6 +47,7 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
                   readOnly={readOnly}
                   onRemove={onRemoveFromSlot ? () => onRemoveFromSlot(slotRef) : undefined}
                   onTapSlot={onTapSlot ? () => onTapSlot(slotRef) : undefined}
+                  showDots={showDots}
                 />
               );
             })}

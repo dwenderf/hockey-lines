@@ -72,7 +72,10 @@ export function AvatarTile({ player }: AvatarTileProps) {
           return <>{player.name.slice(0, i)}<br />{player.name.slice(i + 1)}</>;
         })()}
       </p>
-      <PositionDotGrid positions={player.positions} />
+      {/* Hidden until a player is selected — reveals position matrix for comparison */}
+      <div className={`transition-opacity duration-200 ${!!selectedPlayerId ? 'opacity-100' : 'opacity-0'}`}>
+        <PositionDotGrid positions={player.positions} />
+      </div>
     </div>
   );
 }

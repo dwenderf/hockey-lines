@@ -15,6 +15,8 @@ interface LinesBoardProps {
   onTapSlot?: (slotRef: SlotRef) => void;
   onReturnFromScratch?: (playerId: string) => void;
   onTapScratch?: () => void;
+  /** Player view only: passed from external toggle to show position dot grids */
+  showDots?: boolean;
 }
 
 export function LinesBoard({
@@ -29,6 +31,7 @@ export function LinesBoard({
   onTapSlot,
   onReturnFromScratch,
   onTapScratch,
+  showDots,
 }: LinesBoardProps) {
   const playersById = new Map(players.map((p) => [p.id, p]));
 
@@ -42,6 +45,7 @@ export function LinesBoard({
           onRemoveFromSlot={onRemoveFromSlot}
           onAddLine={onAddForwardLine}
           onTapSlot={onTapSlot}
+          showDots={showDots}
         />
       </div>
       <hr className="border-gray-200" />
@@ -53,6 +57,7 @@ export function LinesBoard({
           onRemoveFromSlot={onRemoveFromSlot}
           onAddLine={onAddDefenseLine}
           onTapSlot={onTapSlot}
+          showDots={showDots}
         />
       </div>
       {!readOnly && onReturnFromScratch && scratchedPlayers && (

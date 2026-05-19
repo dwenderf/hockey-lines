@@ -13,9 +13,10 @@ interface PositionSlotProps {
   playersById: Map<string, RosterPlayer>;
   onRemove?: () => void;
   onTapSlot?: () => void;
+  showDots?: boolean;
 }
 
-export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove, onTapSlot }: PositionSlotProps) {
+export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove, onTapSlot, showDots }: PositionSlotProps) {
   const { activeDragPlayerId, absentPlayerIds, isTouchDevice, isEditMode, selectedPlayerId } = useDragState();
 
   const draggingAbsent = activeDragPlayerId ? absentPlayerIds.has(activeDragPlayerId) : false;
@@ -115,6 +116,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
           fromSlot={slotRef}
           readOnly={readOnly}
           onRemove={onRemove}
+          showDots={showDots}
           preferenceClass={
             player.is_active
               ? getChipClass(player.positions[slotRef.position] ?? 'unset', slotRef.position)

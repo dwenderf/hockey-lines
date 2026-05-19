@@ -13,6 +13,8 @@ interface PlayerChipProps {
   onRemove?: () => void;
   isOverlay?: boolean;
   preferenceClass?: string;
+  /** Player view only: show dot grids via external toggle (captain view drives this from selectedPlayerId) */
+  showDots?: boolean;
 }
 
 const nameClamp: React.CSSProperties = {
@@ -32,7 +34,7 @@ function splitName(name: string): [string, string] {
   return i === -1 ? [name, ''] : [name.slice(0, i), name.slice(i + 1)];
 }
 
-export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
+export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass, showDots }: PlayerChipProps) {
   const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
 
   const draggableId = fromSlot
@@ -106,11 +108,13 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
           {lastName && <><br />{lastName}</>}
         </p>
 
-        {/* Dot grid — always reserves its space; opacity toggles in edit mode.
-            Goalies kept invisible always (no position slots to evaluate). */}
+        {/* Dot grid — always reserves its space; opacity driven by selection state.
+            Captain view: visible when any player is selected (selectedPlayerId set).
+            Player view: visible when external showDots toggle is on.
+            Goalies always invisible (no position slots to evaluate). */}
         <div
-          className={`transition-opacity duration-150 ${
-            isEditMode && !player.is_goalie ? 'opacity-100' : 'opacity-0'
+          className={`transition-opacity duration-200 ${
+            !player.is_goalie && (readOnly ? !!showDots : !!selectedPlayerId) ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <PositionDotGrid positions={player.positions} />
