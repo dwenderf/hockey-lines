@@ -20,7 +20,7 @@ const nameClamp: React.CSSProperties = {
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
-  wordBreak: 'break-word',
+  wordBreak: 'break-all',
 };
 
 // Height shared by mobile slot chips and carousel tiles.
@@ -100,8 +100,8 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
           </button>
         )}
 
-        {/* Name — forced two-line layout matching carousel tiles */}
-        <p className="text-xs font-medium leading-tight text-center w-full" style={{ wordBreak: 'break-word' }}>
+        {/* Name — 2-line max with ellipsis on overflow */}
+        <p className="text-xs font-medium leading-tight text-center w-full" style={nameClamp}>
           {firstName}
           {lastName && <><br />{lastName}</>}
         </p>

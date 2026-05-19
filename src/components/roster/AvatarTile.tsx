@@ -55,10 +55,16 @@ export function AvatarTile({ player }: AvatarTileProps) {
           : 'border-gray-200 bg-white'
       }`}
     >
-      {/* Force first/last name onto separate lines to match grid chip layout */}
+      {/* 2-line max with ellipsis on overflow — matches grid chip layout */}
       <p
         className="text-center text-xs font-medium leading-tight w-full"
-        style={{ wordBreak: 'break-word' }}
+        style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          wordBreak: 'break-all',
+        }}
       >
         {(() => {
           const i = player.name.indexOf(' ');
