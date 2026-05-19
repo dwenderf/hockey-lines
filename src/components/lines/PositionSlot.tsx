@@ -60,21 +60,26 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     }
   }
 
+  // When occupied and not in a special drag/highlight state, strip the outer frame so
+  // the chip fills the slot boundary cleanly (no "tile inside a box" nesting).
+  const specialState = isHighlighted || isOver || !!dragColorClass;
   const slotClass = isHighlighted
     ? 'border-green-400 bg-green-50 animate-pulse cursor-pointer'
     : isOver
     ? `scale-105 ${dragColorClass || 'border-gray-300 bg-gray-50'}`
-    : dragColorClass        // ← occupied AND empty slots both light up during a drag
+    : dragColorClass        // ← all slots color-coded during a drag
     ? dragColorClass
     : player
-    ? 'border-gray-200 bg-gray-50'
+    ? 'border-transparent bg-transparent'  // chip fills the slot; no outer frame
     : 'border-dashed border-gray-200 bg-white';
+
+  const outerPad = player && !specialState ? 'p-0' : 'p-1';
 
   return (
     <div
       ref={setNodeRef}
       onClick={handleClick}
-      className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 p-1 transition-all ${slotClass}`}
+      className={`relative flex min-h-[3rem] min-w-0 flex-1 items-center rounded-md border-2 transition-all ${outerPad} ${slotClass}`}
     >
       {player ? (
         <PlayerChip

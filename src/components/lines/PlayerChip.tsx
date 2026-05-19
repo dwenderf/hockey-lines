@@ -23,6 +23,9 @@ const nameClamp: React.CSSProperties = {
   wordBreak: 'break-word',
 };
 
+// Height shared by mobile slot chips and carousel tiles.
+const MOBILE_TILE_HEIGHT = 85;
+
 export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, preferenceClass }: PlayerChipProps) {
   const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
 
@@ -45,58 +48,36 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
 
-  const isMobileMinimal = isTouchDevice && !isEditMode && isInSlot && !inactive;
-  const isMobileEditSlot = isTouchDevice && isEditMode && isInSlot && !isOverlay;
-
   // Desktop: always show ×. Touch: only show × on the currently-selected chip.
   const showRemove = onRemove && !readOnly && !isOverlay && (!isTouchDevice || (isEditMode && isSelected));
-  const showDotGrid = isTouchDevice && isEditMode && isInSlot && !player.is_goalie;
 
   const borderedClass = inactive
     ? 'bg-gray-50 border-gray-200 opacity-60'
     : (preferenceClass ?? 'bg-white border-gray-300');
 
-  // ── Mobile minimal: borderless text only — tap to select ─────────────
-  if (isMobileMinimal) {
-    function handleMinimalTap(e: React.MouseEvent) {
+  // ── Mobile slot chip (normal + edit mode unified) ─────────────────────
+  // Fixed height matches the carousel tile. Position-fit border always visible.
+  // Dot grid space pre-allocated — opacity controls visibility to prevent layout shifts.
+  if (isTouchDevice && isInSlot && !isOverlay) {
+    function handleTileTap(e: React.MouseEvent) {
+      if (inactive) return;
+      // If a *different* player is selected, let the event bubble to PositionSlot
+      // which will call onTapSlot() to place the selection here (swap or fill).
+      if (selectedPlayerId && selectedPlayerId !== player.id) return;
       e.stopPropagation();
       setEditMode(true);
-      setSelectedPlayerId(player.id);
-    }
-    return (
-      <div
-        onClick={handleMinimalTap}
-        className="slot-tile w-full px-1 py-0.5 select-none cursor-pointer"
-      >
-        <p className="text-xs font-medium leading-tight text-gray-800 text-center" style={nameClamp}>
-          {player.name}
-        </p>
-      </div>
-    );
-  }
-
-  // ── Mobile edit mode: centered avatar-style card + iOS badge ×  ──────
-  if (isMobileEditSlot) {
-    // Click handler: select/deselect this player.
-    // If a *different* player is already selected, let the event bubble to the
-    // parent PositionSlot, which will call onTapSlot() to place the selection here.
-    function handleChipClick(e: React.MouseEvent) {
-      if (!isEditMode) return;
-      if (selectedPlayerId && selectedPlayerId !== player.id) return; // bubble to slot
-      e.stopPropagation();
       setSelectedPlayerId(isSelected ? null : player.id);
     }
 
     return (
       <div
-        ref={setNodeRef}
-        style={style}
-        onClick={handleChipClick}
-        className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 py-1.5 shadow-sm w-full select-none cursor-pointer transition-all ${borderedClass} ${
-          isDragging ? 'opacity-30' : ''
+        onClick={handleTileTap}
+        className={`slot-tile relative flex flex-col items-center rounded-lg border-2 px-2 pt-1.5 pb-1 w-full select-none transition-all ${borderedClass} ${
+          inactive ? '' : 'cursor-pointer'
         } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+        style={{ height: `${MOBILE_TILE_HEIGHT}px` }}
       >
-        {/* iOS-style circular badge — overflows top-right corner */}
+        {/* iOS-style × badge — only on selected chip in edit mode */}
         {showRemove && (
           <button
             onPointerDown={(e) => e.stopPropagation()}
@@ -107,14 +88,21 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
             ×
           </button>
         )}
-        {/* Centered name — matches AvatarTile style */}
-        <p
-          className="text-xs font-medium leading-tight text-center w-full mt-0.5"
-          style={nameClamp}
-        >
+
+        {/* Name */}
+        <p className="text-xs font-medium leading-tight text-center w-full" style={nameClamp}>
           {player.name}
         </p>
-        {showDotGrid && <PositionDotGrid positions={player.positions} />}
+
+        {/* Dot grid — always reserves its space; opacity toggles in edit mode.
+            Goalies kept invisible always (no position slots to evaluate). */}
+        <div
+          className={`mt-auto transition-opacity duration-150 ${
+            isEditMode && !player.is_goalie ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <PositionDotGrid positions={player.positions} />
+        </div>
       </div>
     );
   }
@@ -148,7 +136,6 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
           </button>
         )}
       </div>
-      {showDotGrid && <PositionDotGrid positions={player.positions} />}
     </div>
   );
 }

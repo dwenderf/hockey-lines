@@ -50,7 +50,7 @@ body {
   .bench-carousel-wrapper {
     display: block !important;
     flex-shrink: 0;
-    height: 96px;
+    height: 97px;
     overflow: hidden;
     border-top: 1px solid #e5e7eb;
     background: white;

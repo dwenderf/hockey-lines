@@ -24,8 +24,8 @@ export function AvatarTile({ player }: AvatarTileProps) {
 
   const style: React.CSSProperties = {
     ...(transform ? { transform: CSS.Translate.toString(transform) } : {}),
-    width: '76px',
-    height: '76px',
+    width: '85px',
+    height: '85px',
     flexShrink: 0,
   };
 
