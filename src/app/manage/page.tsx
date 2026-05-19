@@ -288,11 +288,10 @@ export default function ManagePage() {
         >
           {/* Header */}
           <header className="border-b border-gray-200 bg-white shadow-sm relative">
-            {/* Row 1: app title, team, action buttons */}
+            {/* Row 1: team name / team selector, action buttons */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div className="flex items-center gap-2 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 shrink-0">Hockey Lines</h1>
-                {teams.length > 1 && (
+                {teams.length > 1 ? (
                   <div className="flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden">
                     {teams.map((t) => (
                       <button
@@ -308,9 +307,10 @@ export default function ManagePage() {
                       </button>
                     ))}
                   </div>
-                )}
-                {teams.length === 1 && (
-                  <span className="text-sm font-medium text-gray-600 truncate">{teams[0].name}</span>
+                ) : (
+                  <h1 className="text-lg font-bold text-gray-900 truncate">
+                    {teams[0]?.name ?? ''}
+                  </h1>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">

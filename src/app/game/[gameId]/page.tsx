@@ -9,15 +9,18 @@ import { LinesBoard } from '@/components/lines/LinesBoard';
 import { BenchCarousel } from '@/components/roster/BenchCarousel';
 import type { RosterPlayer, Game, ForwardLineSlot, DefenseLineSlot } from '@/lib/types';
 
-function formatGame(game: Game): string {
-  const date = new Date(game.starts_at).toLocaleDateString('en-US', {
+function gameOpponent(game: Game): string {
+  return `${game.is_home ? 'vs' : '@'} ${game.opponent}`;
+}
+
+function gameDate(game: Game): string {
+  return new Date(game.starts_at).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
   });
-  return `${game.is_home ? 'vs' : '@'} ${game.opponent} — ${date}`;
 }
 
 export default function PublicGamePage() {
@@ -25,6 +28,7 @@ export default function PublicGamePage() {
   const isTouchDevice = useIsTouchDevice();
 
   const [game, setGame]               = useState<Game | null>(null);
+  const [teamName, setTeamName]       = useState('');
   const [players, setPlayers]         = useState<RosterPlayer[]>([]);
   const [forwardSlots, setForwardSlots] = useState<ForwardLineSlot[]>([]);
   const [defenseSlots, setDefenseSlots] = useState<DefenseLineSlot[]>([]);
@@ -47,7 +51,7 @@ export default function PublicGamePage() {
       if (!gameData.is_published) { setStatus('unpublished'); return; }
       setGame(gameData);
 
-      const [{ data: pData }, { data: fData }, { data: dData }, { data: aData }] = await Promise.all([
+      const [{ data: pData }, { data: fData }, { data: dData }, { data: aData }, { data: teamData }] = await Promise.all([
         supabase
           .from('rosters')
           .select('id, team_id, player_id, positions, player_level, is_team_admin, is_active, players(id, name, is_goalie)')
@@ -56,8 +60,10 @@ export default function PublicGamePage() {
         supabase.from('forward_line_slots').select('*').eq('game_id', gameId).order('line_number'),
         supabase.from('defense_line_slots').select('*').eq('game_id', gameId).order('line_number'),
         supabase.from('game_absences').select('player_id').eq('game_id', gameId),
+        supabase.from('teams').select('name').eq('id', gameData.team_id).single(),
       ]);
 
+      if (teamData) setTeamName(teamData.name);
       if (pData) setPlayers(pData.map((r) => {
         const p = r.players as unknown as { id: string; name: string; is_goalie: boolean };
         return { id: p.id, name: p.name, is_goalie: p.is_goalie, roster_id: r.id, team_id: r.team_id,
@@ -177,8 +183,13 @@ export default function PublicGamePage() {
         {/* Header */}
         <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm flex items-center justify-between flex-shrink-0">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Hockey Lines</h1>
-            {game && <p className="text-sm text-gray-500 mt-0.5">{formatGame(game)}</p>}
+            <h1 className="text-xl font-bold text-gray-900">{teamName}</h1>
+            {game && (
+              <>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{gameOpponent(game)}</p>
+                <p className="text-xs text-gray-400">{gameDate(game)}</p>
+              </>
+            )}
           </div>
           <a href="/login" className="text-xs text-gray-400 hover:text-gray-600">Captain</a>
         </header>
