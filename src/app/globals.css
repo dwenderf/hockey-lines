@@ -25,6 +25,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ── Mobile / touch show-hide helpers ──────────────────────────────── */
+@media (pointer: coarse) {
+  .mobile-hide { display: none !important; }
+  .mobile-show { display: block !important; }
+}
+
 /* ── Mobile / touch layout ──────────────────────────────────────────── */
 @media (pointer: coarse) {
   .manage-layout {

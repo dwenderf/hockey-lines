@@ -14,6 +14,7 @@ interface LinesBoardProps {
   onAddDefenseLine?: () => void;
   onTapSlot?: (slotRef: SlotRef) => void;
   onReturnFromScratch?: (playerId: string) => void;
+  onTapScratch?: () => void;
 }
 
 export function LinesBoard({
@@ -27,6 +28,7 @@ export function LinesBoard({
   onAddDefenseLine,
   onTapSlot,
   onReturnFromScratch,
+  onTapScratch,
 }: LinesBoardProps) {
   const playersById = new Map(players.map((p) => [p.id, p]));
 
@@ -59,6 +61,7 @@ export function LinesBoard({
         <ScratchZone
           scratchedPlayers={scratchedPlayers}
           onReturnFromScratch={onReturnFromScratch}
+          onTapScratch={onTapScratch}
         />
       )}
     </div>

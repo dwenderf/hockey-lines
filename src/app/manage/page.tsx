@@ -44,6 +44,7 @@ export default function ManagePage() {
   const [copied, setCopied] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const isTouchDevice = useIsTouchDevice();
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
@@ -215,6 +216,18 @@ export default function ManagePage() {
     [selectedPlayerId, updateSlotByRef]
   );
 
+  const handleTapToScratch = useCallback(() => {
+    if (!selectedPlayerId) return;
+    const player = playersById.get(selectedPlayerId);
+    if (!player?.is_active || absentPlayerIds.has(selectedPlayerId)) return;
+    // Clear from slot first if assigned
+    if (placementMap.has(selectedPlayerId)) {
+      updateSlotByRef(placementMap.get(selectedPlayerId)!, null);
+    }
+    markAbsent(selectedPlayerId);
+    setSelectedPlayerId(null);
+  }, [selectedPlayerId, playersById, absentPlayerIds, placementMap, updateSlotByRef, markAbsent]);
+
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -246,18 +259,18 @@ export default function ManagePage() {
           }}
         >
           {/* Header */}
-          <header className="border-b border-gray-200 bg-white shadow-sm">
-            {/* Row 1: app title, team, edit mode done, logout */}
+          <header className="border-b border-gray-200 bg-white shadow-sm relative">
+            {/* Row 1: app title, team, action buttons */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-lg font-bold text-gray-900">Hockey Lines</h1>
+              <div className="flex items-center gap-2 min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 shrink-0">Hockey Lines</h1>
                 {teams.length > 1 && (
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden">
                     {teams.map((t) => (
                       <button
                         key={t.id}
                         onClick={() => setSelectedTeamId(t.id)}
-                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors shrink-0 ${
                           selectedTeamId === t.id
                             ? 'bg-blue-600 text-white'
                             : 'text-gray-600 hover:bg-gray-100'
@@ -269,33 +282,44 @@ export default function ManagePage() {
                   </div>
                 )}
                 {teams.length === 1 && (
-                  <span className="text-sm font-medium text-gray-700">{teams[0].name}</span>
+                  <span className="text-sm font-medium text-gray-600 truncate">{teams[0].name}</span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {isEditMode && (
                   <Button variant="primary" onClick={exitEditMode}>
                     Done
                   </Button>
                 )}
-                <Button variant="ghost" onClick={handleLogout}>
+                {/* Desktop-only logout */}
+                <Button variant="ghost" onClick={handleLogout} className="mobile-hide">
                   Logout
                 </Button>
+                {/* Mobile-only ⋯ menu */}
+                <button
+                  onClick={() => setShowMobileMenu((v) => !v)}
+                  className="mobile-show hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 text-lg leading-none"
+                >
+                  ⋯
+                </button>
               </div>
             </div>
-            {/* Row 2: game selector, add game, publish controls */}
+
+            {/* Row 2: game selector + desktop secondary controls */}
             <div className="flex items-center justify-between px-4 pb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 <GameSelector
                   games={games}
                   selectedGameId={selectedGameId}
                   onSelect={setSelectedGameId}
                 />
-                <Button variant="secondary" onClick={() => setShowAddGame(true)}>
+                {/* Desktop-only: + Game button */}
+                <Button variant="secondary" onClick={() => setShowAddGame(true)} className="mobile-hide shrink-0">
                   + Game
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
+              {/* Desktop-only publish controls */}
+              <div className="flex items-center gap-2 shrink-0 mobile-hide">
                 {selectedGame && (
                   selectedGame.is_published ? (
                     <>
@@ -314,6 +338,50 @@ export default function ManagePage() {
                 )}
               </div>
             </div>
+
+            {/* Mobile overflow dropdown menu */}
+            {showMobileMenu && (
+              <div className="mobile-show hidden absolute right-3 top-12 z-50 w-48 rounded-lg border border-gray-200 bg-white shadow-lg py-1">
+                <button
+                  onClick={() => { setShowAddGame(true); setShowMobileMenu(false); }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  + Add Game
+                </button>
+                {selectedGame && (
+                  selectedGame.is_published ? (
+                    <>
+                      <button
+                        onClick={() => { copyGameLink(); setShowMobileMenu(false); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        {copied ? 'Copied!' : 'Copy link'}
+                      </button>
+                      <button
+                        onClick={() => { unpublishGame(selectedGame.id); setShowMobileMenu(false); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Unpublish
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => { publishGame(selectedGame.id); setShowMobileMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-blue-600 font-medium hover:bg-gray-50"
+                    >
+                      Publish lines
+                    </button>
+                  )
+                )}
+                <hr className="my-1 border-gray-100" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </header>
 
           {/* Main */}
@@ -349,6 +417,7 @@ export default function ManagePage() {
                   onAddDefenseLine={addDefenseLine}
                   onTapSlot={handleTapToPlace}
                   onReturnFromScratch={markAvailable}
+                  onTapScratch={handleTapToScratch}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-400">

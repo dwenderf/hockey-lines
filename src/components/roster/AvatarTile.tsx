@@ -11,13 +11,6 @@ interface AvatarTileProps {
   player: RosterPlayer;
 }
 
-function splitName(name: string): [string, string] {
-  const parts = name.trim().split(' ');
-  if (parts.length === 1) return [parts[0], ''];
-  const last = parts.pop()!;
-  return [parts.join(' '), last];
-}
-
 export function AvatarTile({ player }: AvatarTileProps) {
   const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId } = useDragState();
 
@@ -29,9 +22,13 @@ export function AvatarTile({ player }: AvatarTileProps) {
   const longPress = useLongPress({ onLongPress: () => setEditMode(true) });
 
   const isSelected = selectedPlayerId === player.id;
-  const [firstName, lastName] = splitName(player.name);
 
-  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+  const style: React.CSSProperties = {
+    ...(transform ? { transform: CSS.Translate.toString(transform) } : {}),
+    width: '60px',
+    height: '76px',
+    flexShrink: 0,
+  };
 
   function handleClick() {
     if (!isEditMode) return;
@@ -44,22 +41,24 @@ export function AvatarTile({ player }: AvatarTileProps) {
       style={style}
       onClick={handleClick}
       {...longPress}
-      className={`avatar-tile flex-shrink-0 flex flex-col items-center justify-start rounded-lg border-2 p-1.5 w-14 cursor-grab active:cursor-grabbing select-none transition-all ${
+      className={`avatar-tile flex flex-col items-center justify-start rounded-lg border-2 p-1.5 cursor-grab active:cursor-grabbing select-none transition-all ${
         isDragging ? 'opacity-30' : ''
       } ${
-        isSelected
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-gray-200 bg-white'
+        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
       }`}
     >
-      <span className="text-center text-xs font-medium leading-tight w-full break-words">
-        {firstName}
-      </span>
-      {lastName && (
-        <span className="text-center text-xs font-medium leading-tight w-full break-words">
-          {lastName}
-        </span>
-      )}
+      <p
+        className="text-center text-xs font-medium leading-tight w-full"
+        style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          wordBreak: 'break-word',
+        }}
+      >
+        {player.name}
+      </p>
       <PositionDotGrid positions={player.positions} />
     </div>
   );
