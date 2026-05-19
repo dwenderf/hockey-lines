@@ -25,6 +25,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ── Slot tile entry animation (touch only) ────────────────────────── */
+@keyframes tile-enter {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (pointer: coarse) {
+  .slot-tile {
+    animation: tile-enter 0.2s ease-out;
+  }
+}
+
 /* ── Mobile / touch show-hide helpers ──────────────────────────────── */
 @media (pointer: coarse) {
   .mobile-hide { display: none !important; }

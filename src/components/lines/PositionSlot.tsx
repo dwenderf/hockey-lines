@@ -112,6 +112,7 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
 
       {player ? (
         <PlayerChip
+          key={player.id}
           player={player}
           fromSlot={slotRef}
           readOnly={readOnly}

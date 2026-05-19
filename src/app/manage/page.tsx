@@ -22,6 +22,7 @@ import { useGameAbsences } from '@/hooks/useGameAbsences';
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
 import { DragStateContext } from '@/hooks/useDragState';
 import { LinesBoard } from '@/components/lines/LinesBoard';
+import { CollisionDialog } from '@/components/lines/CollisionDialog';
 import { RosterPanel } from '@/components/roster/RosterPanel';
 import { BenchCarousel } from '@/components/roster/BenchCarousel';
 import { GameSelector } from '@/components/games/GameSelector';
@@ -29,6 +30,14 @@ import { AddGameForm } from '@/components/games/AddGameForm';
 import { PlayerChip } from '@/components/lines/PlayerChip';
 import { Button } from '@/components/ui/Button';
 import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
+
+interface CollisionState {
+  incomingPlayerId: string;
+  occupantId: string;
+  targetSlotRef: SlotRef;
+  /** null when incoming player is from the bench carousel (no swap possible) */
+  sourceSlotRef: SlotRef | null;
+}
 
 export default function ManagePage() {
   const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
@@ -39,6 +48,7 @@ export default function ManagePage() {
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(selectedGameId);
 
   const [activeDragPlayerId, setActiveDragPlayerId] = useState<string | null>(null);
+  const [collision, setCollision] = useState<CollisionState | null>(null);
   const [showAddGame, setShowAddGame] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -185,9 +195,19 @@ export default function ManagePage() {
 
         if (currentOccupantId === playerId) return;
 
-        // Kick-back: always vacate the source slot.
-        // If the target was occupied, the displaced player returns to the bench carousel
-        // (their assignment is cleared; they are NOT swapped to the source slot).
+        if (currentOccupantId !== null) {
+          // Collision — show dialog instead of overwriting.
+          // Source slot is NOT cleared yet; dialog actions will handle it.
+          setCollision({
+            incomingPlayerId: playerId,
+            occupantId: currentOccupantId,
+            targetSlotRef: targetRef,
+            sourceSlotRef: dragData.type === 'slot-player' ? dragData.fromSlot : null,
+          });
+          return;
+        }
+
+        // Empty target — proceed immediately.
         if (dragData.type === 'slot-player') {
           updateSlotByRef(dragData.fromSlot, null);
         }
@@ -224,19 +244,22 @@ export default function ManagePage() {
         return;
       }
 
-      if (sourceSlotRef && targetOccupantId) {
-        // Slot → Occupied Slot: swap both players.
-        updateSlotByRef(sourceSlotRef, targetOccupantId);
-        updateSlotByRef(slotRef, selectedPlayerId);
-      } else if (sourceSlotRef) {
-        // Slot → Empty Slot: relocate.
-        updateSlotByRef(sourceSlotRef, null);
-        updateSlotByRef(slotRef, selectedPlayerId);
-      } else {
-        // Carousel → Any Slot: place player; existing occupant is evicted to bench.
-        updateSlotByRef(slotRef, selectedPlayerId);
+      if (targetOccupantId) {
+        // Collision — pause and ask the user what to do.
+        setCollision({
+          incomingPlayerId: selectedPlayerId,
+          occupantId: targetOccupantId,
+          targetSlotRef: slotRef,
+          sourceSlotRef,
+        });
+        return; // keep edit mode + selection alive until dialog resolves
       }
 
+      // Empty target — proceed immediately.
+      if (sourceSlotRef) {
+        updateSlotByRef(sourceSlotRef, null);
+      }
+      updateSlotByRef(slotRef, selectedPlayerId);
       setIsEditMode(false);
       setSelectedPlayerId(null);
     },
@@ -255,6 +278,33 @@ export default function ManagePage() {
     setIsEditMode(false);
     setSelectedPlayerId(null);
   }, [selectedPlayerId, playersById, absentPlayerIds, placementMap, updateSlotByRef, markAbsent]);
+
+  // ── Collision dialog handlers ─────────────────────────────────────────
+  const handleCollisionReplace = useCallback(() => {
+    if (!collision) return;
+    const { incomingPlayerId, targetSlotRef, sourceSlotRef } = collision;
+    if (sourceSlotRef) updateSlotByRef(sourceSlotRef, null); // vacate source
+    updateSlotByRef(targetSlotRef, incomingPlayerId);        // occupant evicted to bench
+    setCollision(null);
+    setIsEditMode(false);
+    setSelectedPlayerId(null);
+  }, [collision, updateSlotByRef]);
+
+  const handleCollisionSwap = useCallback(() => {
+    if (!collision || !collision.sourceSlotRef) return;
+    const { incomingPlayerId, occupantId, targetSlotRef, sourceSlotRef } = collision;
+    updateSlotByRef(sourceSlotRef, occupantId);   // occupant moves to incoming's old slot
+    updateSlotByRef(targetSlotRef, incomingPlayerId);
+    setCollision(null);
+    setIsEditMode(false);
+    setSelectedPlayerId(null);
+  }, [collision, updateSlotByRef]);
+
+  const handleCollisionCancel = useCallback(() => {
+    setCollision(null);
+    // Touch: keep edit mode + selection so the user can tap a different slot.
+    // Desktop: no selection state exists, nothing to preserve.
+  }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -473,6 +523,23 @@ export default function ManagePage() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Collision resolution dialog — rendered outside DndContext so it's never obscured */}
+      {collision && (() => {
+        const incoming = playersById.get(collision.incomingPlayerId);
+        const occupant = playersById.get(collision.occupantId);
+        if (!incoming || !occupant) return null;
+        return (
+          <CollisionDialog
+            incomingPlayer={incoming}
+            occupantPlayer={occupant}
+            canSwap={collision.sourceSlotRef !== null}
+            onReplace={handleCollisionReplace}
+            onSwap={handleCollisionSwap}
+            onCancel={handleCollisionCancel}
+          />
+        );
+      })()}
 
       <AddGameForm
         open={showAddGame}
