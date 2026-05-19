@@ -308,7 +308,12 @@ export default function ManagePage() {
 
   const handleLogout = async () => {
     const supabase = createClient();
-    await supabase.auth.signOut();
+    // signOut() waits on auth initializePromise which can stall if the token
+    // refresh is slow. Race with a 5s timeout so the redirect always fires.
+    await Promise.race([
+      supabase.auth.signOut(),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ]);
     window.location.href = '/login';
   };
 
