@@ -37,11 +37,11 @@ export function CollisionDialog({
           </p>
         </div>
 
-        {/* Action buttons */}
+        {/* Action buttons — all neutral, no CTA highlight so user must read before tapping */}
         <div className="flex flex-col px-4 pb-4 gap-2">
           <button
             onClick={onReplace}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 active:bg-blue-800 transition-colors"
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
           >
             Replace {occupantPlayer.name} with {incomingPlayer.name}
           </button>
