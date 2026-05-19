@@ -9,9 +9,10 @@ interface ForwardLinesProps {
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
+  onTapSlot?: (slotRef: SlotRef) => void;
 }
 
-export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine }: ForwardLinesProps) {
+export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot }: ForwardLinesProps) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
@@ -30,6 +31,7 @@ export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, o
             playersById={playersById}
             readOnly={readOnly}
             onRemoveFromSlot={onRemoveFromSlot}
+            onTapSlot={onTapSlot}
             slots={FORWARD_POSITIONS.map((pos) => ({
               position: pos,
               slotId: slot.id,

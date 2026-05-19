@@ -6,6 +6,7 @@ import {
   DragOverlay,
   PointerSensor,
   KeyboardSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
@@ -19,9 +20,11 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { useForwardSlots } from '@/hooks/useForwardSlots';
 import { useDefenseSlots } from '@/hooks/useDefenseSlots';
 import { useGameAbsences } from '@/hooks/useGameAbsences';
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
 import { DragStateContext } from '@/hooks/useDragState';
 import { LinesBoard } from '@/components/lines/LinesBoard';
 import { RosterPanel } from '@/components/roster/RosterPanel';
+import { BenchCarousel } from '@/components/roster/BenchCarousel';
 import { GameSelector } from '@/components/games/GameSelector';
 import { AddGameForm } from '@/components/games/AddGameForm';
 import { PlayerChip } from '@/components/lines/PlayerChip';
@@ -31,7 +34,7 @@ import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
 export default function ManagePage() {
   const { teams, selectedTeamId, setSelectedTeamId } = useTeams();
   const { games, selectedGameId, setSelectedGameId, addGame, publishGame, unpublishGame } = useGames(selectedTeamId);
-  const { players, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel } = usePlayers(selectedTeamId);
+  const { players, updatePreference } = usePlayers(selectedTeamId);
   const { absentPlayerIds, markAbsent, markAvailable } = useGameAbsences(selectedGameId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(selectedGameId);
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(selectedGameId);
@@ -39,6 +42,9 @@ export default function ManagePage() {
   const [activeDragPlayerId, setActiveDragPlayerId] = useState<string | null>(null);
   const [showAddGame, setShowAddGame] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const isTouchDevice = useIsTouchDevice();
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
 
@@ -49,14 +55,19 @@ export default function ManagePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  function exitEditMode() {
+    setIsEditMode(false);
+    setSelectedPlayerId(null);
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
   const playersById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
-  // Build a map: playerId -> SlotRef (where they are currently placed)
   const placementMap = useMemo(() => {
     const map = new Map<string, SlotRef>();
     for (const slot of forwardSlots) {
@@ -85,6 +96,11 @@ export default function ManagePage() {
 
   const assignedPlayerIds = useMemo(() => new Set(placementMap.keys()), [placementMap]);
 
+  const scratchedPlayers = useMemo(
+    () => players.filter((p) => p.is_active && absentPlayerIds.has(p.id)),
+    [players, absentPlayerIds]
+  );
+
   const updateSlotByRef = useCallback(
     (slotRef: SlotRef, playerId: string | null) => {
       if (slotRef.table === 'forward_line_slots') {
@@ -112,9 +128,19 @@ export default function ManagePage() {
       const playerId = dragData.playerId;
       const player = playersById.get(playerId);
 
+      if (dropData.type === 'scratched-zone') {
+        if (!player?.is_active || absentPlayerIds.has(playerId)) return;
+        // Clear from slot first if assigned
+        if (placementMap.has(playerId)) {
+          updateSlotByRef(placementMap.get(playerId)!, null);
+        }
+        markAbsent(playerId);
+        return;
+      }
+
       if (dropData.type === 'skaters-section') {
         if (player && !player.is_active) {
-          reactivatePlayer(player.roster_id);
+          // reactivatePlayer removed — roster admin handles this
         } else if (absentPlayerIds.has(playerId)) {
           markAvailable(playerId);
         }
@@ -122,30 +148,27 @@ export default function ManagePage() {
       }
 
       if (dropData.type === 'out-this-game') {
-        // Mark active, non-absent player as out for this game
         if (player?.is_active && !absentPlayerIds.has(playerId)) {
+          // Clear from slot first if assigned
+          if (placementMap.has(playerId)) {
+            updateSlotByRef(placementMap.get(playerId)!, null);
+          }
           markAbsent(playerId);
         }
         return;
       }
 
       if (dropData.type === 'inactive-section') {
-        // Deactivate — only if active, not absent, and not currently in a slot
-        if (player?.is_active && !absentPlayerIds.has(playerId) && !assignedPlayerIds.has(playerId)) {
-          deactivatePlayer(player.roster_id);
-        }
+        // Deactivate removed — roster admin handles this
         return;
       }
 
       if (dropData.type === 'roster') {
-        // Inactive players can't use the generic roster dropzone
         if (!player?.is_active) return;
-        // Absent players dropped on the roster panel → mark available
         if (absentPlayerIds.has(playerId)) {
           markAvailable(playerId);
           return;
         }
-        // Remove from source slot if dragged from a slot
         if (dragData.type === 'slot-player') {
           updateSlotByRef(dragData.fromSlot, null);
         }
@@ -153,32 +176,27 @@ export default function ManagePage() {
       }
 
       if (dropData.type === 'slot') {
-        // Inactive and absent players can't go directly to slots — must go to Skaters first
         if (!player?.is_active || absentPlayerIds.has(playerId)) return;
 
         const targetRef = dropData.slotRef;
-        // Find who is currently in target slot
         const currentOccupantId = [...placementMap.entries()].find(
           ([, ref]) => ref.slotId === targetRef.slotId && ref.column === targetRef.column
         )?.[0] ?? null;
 
-        if (currentOccupantId === playerId) return; // no-op: same player, same slot
+        if (currentOccupantId === playerId) return;
 
         if (dragData.type === 'slot-player') {
           const fromRef = dragData.fromSlot;
           if (currentOccupantId) {
-            // Swap
             updateSlotByRef(fromRef, currentOccupantId);
           } else {
-            // Vacate source slot
             updateSlotByRef(fromRef, null);
           }
         }
-        // Place dragged player into target
         updateSlotByRef(targetRef, playerId);
       }
     },
-    [placementMap, updateSlotByRef, playersById, assignedPlayerIds, absentPlayerIds, deactivatePlayer, reactivatePlayer, markAbsent, markAvailable]
+    [placementMap, updateSlotByRef, playersById, assignedPlayerIds, absentPlayerIds, markAbsent, markAvailable]
   );
 
   const handleRemoveFromSlot = useCallback(
@@ -186,6 +204,15 @@ export default function ManagePage() {
       updateSlotByRef(slotRef, null);
     },
     [updateSlotByRef]
+  );
+
+  const handleTapToPlace = useCallback(
+    (slotRef: SlotRef) => {
+      if (!selectedPlayerId) return;
+      updateSlotByRef(slotRef, selectedPlayerId);
+      setSelectedPlayerId(null);
+    },
+    [selectedPlayerId, updateSlotByRef]
   );
 
   const handleLogout = async () => {
@@ -197,17 +224,30 @@ export default function ManagePage() {
   const activePlayer = activeDragPlayerId ? playersById.get(activeDragPlayerId) : null;
 
   return (
-    <DragStateContext.Provider value={{ activeDragPlayerId, absentPlayerIds }}>
+    <DragStateContext.Provider value={{
+      activeDragPlayerId,
+      absentPlayerIds,
+      isTouchDevice,
+      isEditMode,
+      setEditMode: setIsEditMode,
+      selectedPlayerId,
+      setSelectedPlayerId,
+    }}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex h-screen flex-col bg-gray-100">
+        <div
+          className={`flex h-screen flex-col bg-gray-100 ${isEditMode ? 'edit-mode-active' : ''}`}
+          onClick={(e) => {
+            if (isEditMode && e.target === e.currentTarget) exitEditMode();
+          }}
+        >
           {/* Header */}
           <header className="border-b border-gray-200 bg-white shadow-sm">
-            {/* Row 1: app title, team, logout */}
+            {/* Row 1: app title, team, edit mode done, logout */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-lg font-bold text-gray-900">Hockey Lines</h1>
@@ -232,9 +272,16 @@ export default function ManagePage() {
                   <span className="text-sm font-medium text-gray-700">{teams[0].name}</span>
                 )}
               </div>
-              <Button variant="ghost" onClick={handleLogout}>
-                Logout
-              </Button>
+              <div className="flex items-center gap-2">
+                {isEditMode && (
+                  <Button variant="primary" onClick={exitEditMode}>
+                    Done
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </div>
             </div>
             {/* Row 2: game selector, add game, publish controls */}
             <div className="flex items-center justify-between px-4 pb-3">
@@ -270,33 +317,38 @@ export default function ManagePage() {
           </header>
 
           {/* Main */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* Roster sidebar */}
-            <aside className="w-64 shrink-0 overflow-hidden border-r border-gray-200 bg-white p-3 flex flex-col">
+          <div
+            className="manage-layout flex flex-1 overflow-hidden"
+            onClick={(e) => {
+              if (isEditMode && e.target === e.currentTarget) exitEditMode();
+            }}
+          >
+            {/* Roster sidebar (desktop only) */}
+            <aside className="roster-sidebar w-64 shrink-0 overflow-hidden border-r border-gray-200 bg-white p-3 flex flex-col">
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Roster</h2>
               <div className="flex-1 overflow-hidden">
                 <RosterPanel
                   players={players}
                   assignedPlayerIds={assignedPlayerIds}
                   absentPlayerIds={absentPlayerIds}
-                  teamId={selectedTeamId ?? undefined}
-                  onAdd={addPlayer}
-                  onAddExisting={addExistingPlayer}
                   onUpdatePreference={updatePreference}
                 />
               </div>
             </aside>
 
             {/* Lines board */}
-            <main className="flex-1 overflow-y-auto p-6">
+            <main className="lines-main flex-1 overflow-y-auto p-6">
               {selectedGameId ? (
                 <LinesBoard
                   forwardSlots={forwardSlots}
                   defenseSlots={defenseSlots}
                   players={players}
+                  scratchedPlayers={scratchedPlayers}
                   onRemoveFromSlot={handleRemoveFromSlot}
                   onAddForwardLine={addForwardLine}
                   onAddDefenseLine={addDefenseLine}
+                  onTapSlot={handleTapToPlace}
+                  onReturnFromScratch={markAvailable}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-400">
@@ -308,6 +360,15 @@ export default function ManagePage() {
                 </div>
               )}
             </main>
+
+            {/* Bench carousel (mobile/touch only — hidden by default, shown via CSS) */}
+            <div className="bench-carousel-wrapper hidden">
+              <BenchCarousel
+                players={players}
+                assignedPlayerIds={assignedPlayerIds}
+                absentPlayerIds={absentPlayerIds}
+              />
+            </div>
           </div>
         </div>
 

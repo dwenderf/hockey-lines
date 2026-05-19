@@ -8,9 +8,10 @@ interface DefenseLinesProps {
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
+  onTapSlot?: (slotRef: SlotRef) => void;
 }
 
-export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine }: DefenseLinesProps) {
+export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot }: DefenseLinesProps) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
@@ -29,6 +30,7 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
             playersById={playersById}
             readOnly={readOnly}
             onRemoveFromSlot={onRemoveFromSlot}
+            onTapSlot={onTapSlot}
             slots={DEFENSE_POSITIONS.map((pos) => ({
               position: pos,
               slotId: slot.id,

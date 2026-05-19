@@ -24,3 +24,40 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ── Mobile / touch layout ──────────────────────────────────────────── */
+@media (pointer: coarse) {
+  .manage-layout {
+    flex-direction: column !important;
+  }
+
+  .roster-sidebar {
+    display: none !important;
+  }
+
+  .lines-main {
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .bench-carousel-wrapper {
+    display: block !important;
+    flex-shrink: 0;
+    height: 112px;
+    overflow: hidden;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+  }
+}
+
+/* ── Jiggle / edit mode ─────────────────────────────────────────────── */
+@keyframes jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%       { transform: rotate(-2.5deg); }
+  75%       { transform: rotate(2.5deg); }
+}
+
+.edit-mode-active .avatar-tile {
+  animation: jiggle 0.25s ease-in-out infinite;
+}

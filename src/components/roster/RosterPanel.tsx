@@ -5,8 +5,6 @@ import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 
 import { RosterPlayer as RosterPlayerComponent } from './RosterPlayer';
-import { AddPlayerForm } from './AddPlayerForm';
-import { PlayerSearch } from './PlayerSearch';
 import { PreferenceEditor } from '@/components/preferences/PreferenceEditor';
 import type { RosterPlayer, Position, Preference } from '@/lib/types';
 
@@ -14,10 +12,7 @@ interface RosterPanelProps {
   players: RosterPlayer[];
   assignedPlayerIds: Set<string>;
   absentPlayerIds?: Set<string>;
-  teamId?: string;
   readOnly?: boolean;
-  onAdd?: (name: string, isGoalie: boolean) => void;
-  onAddExisting?: (playerId: string) => void;
   onUpdatePreference?: (rosterId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
 }
 
@@ -25,13 +20,9 @@ export function RosterPanel({
   players,
   assignedPlayerIds,
   absentPlayerIds,
-  teamId,
   readOnly,
-  onAdd,
-  onAddExisting,
   onUpdatePreference,
 }: RosterPanelProps) {
-  const [addMode, setAddMode] = useState<'search' | 'new'>('search');
   const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
 
   const { activeDragPlayerId } = useDragState();
@@ -175,33 +166,6 @@ export function RosterPanel({
           </div>
         </div>
       </div>
-
-      {!readOnly && (onAdd || onAddExisting) && (
-        <div className="rounded-lg border border-gray-200 bg-white p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Add Player</p>
-            <div className="flex gap-1 text-xs">
-              <button
-                onClick={() => setAddMode('search')}
-                className={`rounded px-2 py-0.5 ${addMode === 'search' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Search
-              </button>
-              <button
-                onClick={() => setAddMode('new')}
-                className={`rounded px-2 py-0.5 ${addMode === 'new' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                New
-              </button>
-            </div>
-          </div>
-          {addMode === 'search' && teamId && onAddExisting ? (
-            <PlayerSearch teamId={teamId} onAdd={onAddExisting} />
-          ) : addMode === 'new' && onAdd ? (
-            <AddPlayerForm onAdd={onAdd} />
-          ) : null}
-        </div>
-      )}
 
       {editingPlayer && onUpdatePreference && (
         <PreferenceEditor

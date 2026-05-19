@@ -15,9 +15,10 @@ interface LineRowProps {
   playersById: Map<string, RosterPlayer>;
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
+  onTapSlot?: (slotRef: SlotRef) => void;
 }
 
-export function LineRow({ lineNumber, slots, playersById, readOnly, onRemoveFromSlot }: LineRowProps) {
+export function LineRow({ lineNumber, slots, playersById, readOnly, onRemoveFromSlot, onTapSlot }: LineRowProps) {
   return (
     <div className="flex items-center gap-2">
       <span className="w-5 shrink-0 text-center text-xs font-bold text-gray-400">{lineNumber}</span>
@@ -31,6 +32,7 @@ export function LineRow({ lineNumber, slots, playersById, readOnly, onRemoveFrom
             playersById={playersById}
             readOnly={readOnly}
             onRemove={onRemoveFromSlot ? () => onRemoveFromSlot(slotRef) : undefined}
+            onTapSlot={onTapSlot ? () => onTapSlot(slotRef) : undefined}
           />
         );
       })}
