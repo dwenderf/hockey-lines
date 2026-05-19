@@ -51,10 +51,9 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
         : 'absolute inset-0 rounded-md border-2 border-dashed border-blue-400 bg-blue-50 animate-pulse pointer-events-none')
     : '';
 
-  const steadyRing = isOccupiedRing
-    ? (isRefusedTarget
-      ? 'ring-2 ring-red-400'
-      : isPreferred ? 'ring-2 ring-green-400' : 'ring-2 ring-blue-400')
+  // Dashed border (not solid ring) so it doesn't stack visually with the chip's own border-2.
+  const occupiedDashColor = isOccupiedRing
+    ? (isRefusedTarget ? 'border-red-400' : isPreferred ? 'border-green-400' : 'border-blue-400')
     : '';
 
   function handleClick(e: React.MouseEvent) {
@@ -83,16 +82,17 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
       ? `border-2 border-gray-300 scale-105 ${dragColorClass || 'bg-gray-50'}`
       : `border-0 ${dragColorClass}`)
     : isOccupiedRing
-    ? `border-0 bg-transparent ${steadyRing}`
+    ? `border-2 border-dashed bg-transparent ${occupiedDashColor}`  // dashed so it doesn't stack with chip border
     : player
     ? 'border-0 bg-transparent'          // chip is the only visual element
     : isEmptyPulse
     ? 'border-0 bg-transparent'          // absolute pulse layer provides visuals
     : 'border-2 border-dashed border-gray-200 bg-white';
 
-  // p-0 everywhere except normal dashed empty slots and drag-feedback states
+  // p-0 everywhere except dashed slots (empty + occupied targets) and drag-feedback states
   const outerPad = specialState ? 'p-1'
-    : (!player && !isEmptyPulse) ? 'p-1'  // normal dashed empty needs breathing room
+    : isOccupiedRing ? 'p-1'             // breathing room between dashed border and chip
+    : (!player && !isEmptyPulse) ? 'p-1' // normal dashed empty needs breathing room
     : 'p-0';
 
   const minH    = isTouchDevice ? 'min-h-[76px]' : 'min-h-[3rem]';

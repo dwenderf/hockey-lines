@@ -57,8 +57,11 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
   // Desktop: always show ×. Touch: only show × on the currently-selected chip.
   const showRemove = onRemove && !readOnly && !isOverlay && (!isTouchDevice || (isEditMode && isSelected));
 
+  // When selected, suppress position-fit color so the × badge is the sole selection signal.
   const borderedClass = inactive
     ? 'bg-gray-50 border-gray-200 opacity-60'
+    : isSelected
+    ? 'bg-white border-gray-700'
     : (preferenceClass ?? 'bg-white border-gray-300');
 
   // ── Mobile slot chip (normal + edit mode unified) ─────────────────────
@@ -82,7 +85,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
         onClick={handleTileTap}
         className={`slot-tile relative flex flex-col items-center justify-center rounded-lg border-2 px-1.5 py-1 w-full select-none transition-all ${borderedClass} ${
           inactive ? '' : 'cursor-pointer'
-        } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+        }`}
         style={{ height: `${MOBILE_TILE_HEIGHT}px` }}
       >
         {/* iOS-style × badge — only on selected chip in edit mode */}
