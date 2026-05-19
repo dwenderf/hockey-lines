@@ -51,7 +51,7 @@ export function AvatarTile({ player }: AvatarTileProps) {
         isDragging ? 'opacity-30' : ''
       } ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-400 ring-offset-1'
+          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2'
           : 'border-gray-200 bg-white'
       }`}
     >

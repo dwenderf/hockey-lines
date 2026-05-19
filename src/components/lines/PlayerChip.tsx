@@ -82,7 +82,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
         onClick={handleTileTap}
         className={`slot-tile relative flex flex-col items-center justify-center rounded-lg border-2 px-1.5 py-1 w-full select-none transition-all ${borderedClass} ${
           inactive ? '' : 'cursor-pointer'
-        } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+        } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
         style={{ height: `${MOBILE_TILE_HEIGHT}px` }}
       >
         {/* iOS-style × badge — only on selected chip in edit mode */}

@@ -3,7 +3,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 import { PlayerChip } from './PlayerChip';
-import { SLOT_DRAG_COLORS, CHIP_PREFERENCE_COLORS } from '@/lib/constants';
+import { SLOT_DRAG_COLORS, getChipClass } from '@/lib/constants';
 import type { RosterPlayer, SlotRef, Preference } from '@/lib/types';
 
 interface PositionSlotProps {
@@ -26,31 +26,34 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     disabled: readOnly || draggingAbsent,
   });
 
+  // ── Valid-target detection ───────────────────────────────────────────
+  // A slot is a valid target when the selected player has a preferred or
+  // acceptable fit here AND it isn't their own current slot.
   const selectedPlayer = selectedPlayerId ? playersById.get(selectedPlayerId) : null;
   const highlightPref = selectedPlayer?.positions[slotRef.position];
-  // Highlight empty slots that are compatible with the selected player.
-  // Occupied slots don't pulse but are still tappable (click bubbles from the chip).
-  const isHighlighted =
+  const isValidTarget =
     !readOnly &&
     isEditMode &&
     !!selectedPlayerId &&
-    selectedPlayerId !== player?.id &&  // don't highlight the slot the selected player is already in
-    !player &&
+    selectedPlayerId !== player?.id &&
     (highlightPref === 'preferred' || highlightPref === 'acceptable');
+
+  // Valid-target pulse color matches slot TYPE, not preference tier:
+  //   defense slots (LD/RD) → blue pulse, forward slots → green pulse
+  const isDefenseSlot = slotRef.position === 'LD' || slotRef.position === 'RD';
+  const validTargetBorder = isDefenseSlot
+    ? 'border-2 border-blue-400 border-dashed bg-blue-50 animate-pulse cursor-pointer'
+    : 'border-2 border-green-400 border-dashed bg-green-50 animate-pulse cursor-pointer';
 
   function handleClick(e: React.MouseEvent) {
     if (readOnly) return;
-    // Place the selected player into this slot (works for empty OR occupied slots).
-    // The PlayerChip inside an occupied slot bubbles the event up when a *different*
-    // player is selected, so we naturally reach here only in that case.
     if (isEditMode && selectedPlayerId && onTapSlot) {
       e.stopPropagation();
       onTapSlot();
     }
   }
 
-  // Compute drag color for this slot based on the dragged player's preference.
-  // Applied to ALL slots (occupied and empty) so the captain can instantly see fit.
+  // ── Desktop drag colors (desktop only — no activeDragPlayerId on touch) ─
   let dragColorClass = '';
   if (activeDragPlayerId && !readOnly && !draggingAbsent) {
     const activePlayer = playersById.get(activeDragPlayerId);
@@ -60,24 +63,27 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
     }
   }
 
-  // When occupied and not in a special drag/highlight state, remove the outer frame
-  // entirely so the chip fills the slot cleanly (no "tile inside a box" nesting).
-  // border-0 (not border-transparent) is used because border-transparent still
-  // occupies 2px of box-sizing space that would clip the chip.
-  const specialState = isHighlighted || isOver || !!dragColorClass;
-  const slotBorder = isHighlighted
-    ? 'border-2 border-green-400 bg-green-50 animate-pulse cursor-pointer'
+  // ── Slot border priority ─────────────────────────────────────────────
+  // 1. Valid tap target (selected player fits here) → colored pulsing dashed border
+  // 2. Drag hover → scale + color ring
+  // 3. Active drag, not hovering → color ring only
+  // 4. Occupied, no special state → border-0 (chip is the only visual element)
+  // 5. Empty, no special state → muted dashed gray
+  const specialState = isOver || !!dragColorClass;
+  const slotBorder = isValidTarget
+    ? validTargetBorder
     : isOver
     ? `border-2 border-gray-300 scale-105 ${dragColorClass || 'bg-gray-50'}`
-    : dragColorClass        // ring indicator during desktop drag (occupied or empty)
+    : dragColorClass
     ? `border-0 ${dragColorClass}`
     : player
-    ? 'border-0 bg-transparent'  // occupied, no drag — chip is the only visual element
+    ? 'border-0 bg-transparent'
     : 'border-2 border-dashed border-gray-200 bg-white';
 
-  const outerPad = player && !specialState ? 'p-0' : 'p-1';
+  // p-0 on occupied slots with no special state so chip fills cleanly.
+  const outerPad = (player && !specialState && !isValidTarget) ? 'p-0' : 'p-1';
 
-  // Keep empty slots the same height as chips on touch so rows don't shrink.
+  // On touch, empty slots match the fixed chip height so rows stay uniform.
   const minH = isTouchDevice ? 'min-h-[76px]' : 'min-h-[3rem]';
 
   return (
@@ -92,7 +98,11 @@ export function PositionSlot({ slotRef, player, readOnly, playersById, onRemove,
           fromSlot={slotRef}
           readOnly={readOnly}
           onRemove={onRemove}
-          preferenceClass={player.is_active ? CHIP_PREFERENCE_COLORS[player.positions[slotRef.position] ?? 'unset'] : undefined}
+          preferenceClass={
+            player.is_active
+              ? getChipClass(player.positions[slotRef.position] ?? 'unset', slotRef.position)
+              : undefined
+          }
         />
       ) : (
         <span className="w-full text-center text-xs text-gray-300 select-none">—</span>
