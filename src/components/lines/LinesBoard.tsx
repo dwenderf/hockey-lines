@@ -35,7 +35,6 @@ export function LinesBoard({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-gray-600">Forwards</h2>
         <ForwardLines
           slots={forwardSlots}
           playersById={playersById}
@@ -47,7 +46,6 @@ export function LinesBoard({
       </div>
       <hr className="border-gray-200" />
       <div>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-gray-600">Defense</h2>
         <DefenseLines
           slots={defenseSlots}
           playersById={playersById}

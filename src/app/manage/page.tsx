@@ -63,7 +63,10 @@ export default function ManagePage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { distance: 8 } }),
+    // Touch: must hold 200ms without moving >10px to lift a tile.
+    // Horizontal swipes exceed the tolerance instantly → native carousel scroll handles them.
+    // Once lifted, dnd-kit locks touch events so the drag clears the carousel cleanly.
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 10 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -186,13 +189,11 @@ export default function ManagePage() {
 
         if (currentOccupantId === playerId) return;
 
+        // Kick-back: always vacate the source slot.
+        // If the target was occupied, the displaced player returns to the bench carousel
+        // (their assignment is cleared; they are NOT swapped to the source slot).
         if (dragData.type === 'slot-player') {
-          const fromRef = dragData.fromSlot;
-          if (currentOccupantId) {
-            updateSlotByRef(fromRef, currentOccupantId);
-          } else {
-            updateSlotByRef(fromRef, null);
-          }
+          updateSlotByRef(dragData.fromSlot, null);
         }
         updateSlotByRef(targetRef, playerId);
       }

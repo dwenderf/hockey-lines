@@ -50,7 +50,7 @@ body {
   .bench-carousel-wrapper {
     display: block !important;
     flex-shrink: 0;
-    height: 112px;
+    height: 96px;
     overflow: hidden;
     border-top: 1px solid #e5e7eb;
     background: white;
@@ -64,6 +64,7 @@ body {
   75%       { transform: rotate(2.5deg); }
 }
 
-.edit-mode-active .avatar-tile {
+/* Jiggle applies ONLY to rostered slot cards, never to bench carousel tiles */
+.edit-mode-active .slot-tile {
   animation: jiggle 0.25s ease-in-out infinite;
 }
