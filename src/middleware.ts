@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -25,19 +25,22 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refresh the session — getUser() validates the JWT and refreshes the token
+  // if expired, writing fresh cookies so the browser client never stalls.
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user && request.nextUrl.pathname.startsWith('/manage')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
   }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ['/manage/:path*'],
+  matcher: [
+    // Skip Next.js internals, static files, and the auth callback route
+    '/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
