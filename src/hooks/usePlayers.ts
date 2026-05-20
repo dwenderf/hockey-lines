@@ -19,6 +19,8 @@ export function usePlayers(teamId: string | null) {
         player_id,
         positions,
         player_level,
+        jersey_number,
+        player_nickname,
         is_team_admin,
         is_active,
         players ( id, name, is_goalie )
@@ -38,6 +40,8 @@ export function usePlayers(teamId: string | null) {
             team_id: r.team_id,
             positions: r.positions,
             player_level: r.player_level,
+            jersey_number: r.jersey_number ?? null,
+            player_nickname: r.player_nickname ?? null,
             is_team_admin: r.is_team_admin,
             is_active: r.is_active,
           };
@@ -93,6 +97,8 @@ export function usePlayers(teamId: string | null) {
           team_id: roster.team_id,
           positions: roster.positions,
           player_level: roster.player_level,
+          jersey_number: roster.jersey_number ?? null,
+          player_nickname: roster.player_nickname ?? null,
           is_team_admin: roster.is_team_admin,
           is_active: roster.is_active,
         };
@@ -145,6 +151,8 @@ export function usePlayers(teamId: string | null) {
           team_id: roster.team_id,
           positions: roster.positions,
           player_level: roster.player_level,
+          jersey_number: roster.jersey_number ?? null,
+          player_nickname: roster.player_nickname ?? null,
           is_team_admin: roster.is_team_admin,
           is_active: roster.is_active,
         };

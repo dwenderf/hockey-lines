@@ -54,7 +54,7 @@ export default function PublicGamePage() {
       const [{ data: pData }, { data: fData }, { data: dData }, { data: aData }, { data: teamData }] = await Promise.all([
         supabase
           .from('rosters')
-          .select('id, team_id, player_id, positions, player_level, is_team_admin, is_active, players(id, name, is_goalie)')
+          .select('id, team_id, player_id, positions, player_level, jersey_number, player_nickname, is_team_admin, is_active, players(id, name, is_goalie)')
           .eq('team_id', gameData.team_id)
           .order('players(name)'),
         supabase.from('forward_line_slots').select('*').eq('game_id', gameId).order('line_number'),
@@ -67,7 +67,8 @@ export default function PublicGamePage() {
       if (pData) setPlayers(pData.map((r) => {
         const p = r.players as unknown as { id: string; name: string; is_goalie: boolean };
         return { id: p.id, name: p.name, is_goalie: p.is_goalie, roster_id: r.id, team_id: r.team_id,
-                 positions: r.positions, player_level: r.player_level, is_team_admin: r.is_team_admin, is_active: r.is_active };
+                 positions: r.positions, player_level: r.player_level, jersey_number: r.jersey_number ?? null,
+                 player_nickname: r.player_nickname ?? null, is_team_admin: r.is_team_admin, is_active: r.is_active };
       }));
       if (fData) setForwardSlots(fData);
       if (dData) setDefenseSlots(dData);
