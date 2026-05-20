@@ -57,7 +57,7 @@ export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, rea
             : undefined,
         }}
       >
-        <div className="flex items-center h-full px-2 gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex items-center h-full px-2 pt-3 gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {benchPlayers.length === 0 ? (
             <div className="flex items-center gap-1.5 px-2 w-full justify-center" style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
               <span>✓</span>

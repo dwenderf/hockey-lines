@@ -45,7 +45,7 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
   const tileStyle: React.CSSProperties = isSelected
     ? { borderColor: 'var(--selected-border)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }
     : { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
-        opacity: otherSelected ? 0.75 : 1 };
+        opacity: otherSelected ? 0.5 : 1 };
 
   const displayName = player.display_name || player.name;
   const i = displayName.indexOf(' ');

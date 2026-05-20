@@ -135,7 +135,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
       : isSelected
       ? { borderColor: selectedBorderColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)', borderStyle: 'solid' }
       : { borderColor: defaultBorderColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
-          opacity: dimmed ? 0.75 : 1 };
+          opacity: dimmed ? 0.5 : 1 };
 
     return (
       <div
@@ -177,7 +177,7 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
     : isSelected
     ? { borderColor: selectedBorderColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)' }
     : { borderColor: defaultBorderColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
-        opacity: dimmed ? 0.75 : 1 };
+        opacity: dimmed ? 0.5 : 1 };
 
   return (
     <div
