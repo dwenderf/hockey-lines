@@ -13,17 +13,18 @@ interface DefenseLinesProps {
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
   onTapSlot?: (slotRef: SlotRef) => void;
+  onEditPlayer?: (player: RosterPlayer) => void;
   showDots?: boolean;
 }
 
-export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, showDots }: DefenseLinesProps) {
+export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, onEditPlayer, showDots }: DefenseLinesProps) {
   return (
     <div>
       {/* Header row — spacers in col 0 and col 3 align labels with the slots */}
       <div className={`grid gap-2 mb-2 ${DEFENSE_GRID}`}>
         <div />
         {DEFENSE_POSITIONS.map((pos) => (
-          <div key={pos} className="text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <div key={pos} className="text-center text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
             {pos}
           </div>
         ))}
@@ -33,7 +34,7 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
       <div className="space-y-1.5">
         {slots.map((slot) => (
           <div key={slot.id} className={`grid gap-2 ${DEFENSE_GRID}`}>
-            <div /> {/* left spacer */}
+            <div />
             {DEFENSE_POSITIONS.map((pos) => {
               const col = POSITION_TO_COLUMN[pos];
               const playerId = slot[col as keyof DefenseLineSlot] as string | null;
@@ -47,11 +48,12 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
                   readOnly={readOnly}
                   onRemove={onRemoveFromSlot ? () => onRemoveFromSlot(slotRef) : undefined}
                   onTapSlot={onTapSlot ? () => onTapSlot(slotRef) : undefined}
+                  onEditPlayer={onEditPlayer}
                   showDots={showDots}
                 />
               );
             })}
-            <div /> {/* right spacer */}
+            <div />
           </div>
         ))}
       </div>
@@ -59,7 +61,8 @@ export function DefenseLines({ slots, playersById, readOnly, onRemoveFromSlot, o
       {!readOnly && onAddLine && slots.length < 4 && (
         <button
           onClick={onAddLine}
-          className="mt-2 text-xs text-blue-500 hover:text-blue-700"
+          className="mt-2 text-xs"
+          style={{ color: 'var(--accent)' }}
         >
           + Add pair {slots.length + 1}
         </button>

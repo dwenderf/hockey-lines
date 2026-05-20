@@ -68,8 +68,9 @@ export function RosterPanel({
       <div
         ref={setNodeRef}
         className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-lg border-2 p-3 transition-colors ${
-          isOver && draggingAbsent ? 'border-green-400 bg-green-50' : isOver && !draggingInactive ? 'border-blue-400 bg-blue-50' : 'border-dashed border-gray-200 bg-gray-50'
+          isOver && draggingAbsent ? 'border-green-400 bg-green-50' : isOver && !draggingInactive ? 'border-blue-400 bg-blue-50' : 'border-dashed'
         }`}
+        style={!(isOver) ? { borderColor: 'var(--border)', backgroundColor: 'var(--bg-page)' } : undefined}
       >
         <div
           ref={setSkatersRef}
@@ -77,7 +78,7 @@ export function RosterPanel({
             isOverSkaters && !draggingAbsent ? 'border-green-400 bg-green-50' : 'border-transparent'
           }`}
         >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-600">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--dot-preferred)' }}>
             Skaters ({skaters.length})
           </p>
           <div className="space-y-1.5">
@@ -91,14 +92,14 @@ export function RosterPanel({
               />
             ))}
             {skaters.length === 0 && (
-              <p className="py-4 text-center text-xs text-gray-400">No skaters yet</p>
+              <p className="py-4 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>No skaters yet</p>
             )}
           </div>
         </div>
 
         {goalies.length > 0 && (
           <>
-            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
               Goalies ({goalies.length})
             </p>
             <div className="space-y-1.5">
@@ -135,7 +136,7 @@ export function RosterPanel({
                 />
               ))}
               {outThisGame.length === 0 && (
-                <p className="py-2 text-center text-xs text-gray-400">No players marked out</p>
+                <p className="py-2 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>No players marked out</p>
               )}
             </div>
           </div>
@@ -147,7 +148,7 @@ export function RosterPanel({
             isOverInactive && !draggingAbsent && !draggingInactive ? 'border-red-300 bg-red-50' : 'border-dashed border-transparent'
           }`}
         >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
             Inactive ({inactive.length})
             {!readOnly && <span className="ml-1 font-normal normal-case">— drag here to deactivate</span>}
           </p>
@@ -161,7 +162,7 @@ export function RosterPanel({
               />
             ))}
             {inactive.length === 0 && (
-              <p className="py-2 text-center text-xs text-gray-400">No inactive players</p>
+              <p className="py-2 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>No inactive players</p>
             )}
           </div>
         </div>

@@ -59,9 +59,10 @@ export function ScratchZone({ scratchedPlayers, onReturnFromScratch, onTapScratc
             {scratchedPlayers.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center gap-1 rounded border border-amber-200 bg-white px-2 py-1 text-sm opacity-50"
+                className="flex items-center gap-1 rounded border border-amber-200 px-2 py-1 text-sm opacity-50"
+                style={{ backgroundColor: 'var(--surface)' }}
               >
-                <span className="font-medium">{player.name}</span>
+                <span className="font-medium">{player.display_name || player.name}</span>
                 {!readOnly && onReturnFromScratch && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onReturnFromScratch(player.id); }}

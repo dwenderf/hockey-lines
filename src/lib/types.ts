@@ -32,6 +32,9 @@ export interface RosterPlayer extends Player {
   player_level: 1 | 2 | 3 | 4 | 5 | null;
   is_team_admin: boolean;
   is_active: boolean;
+  jersey_number: string | null;
+  player_nickname: string | null;
+  display_name: string;
 }
 
 export interface GameAbsence {

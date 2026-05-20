@@ -14,14 +14,14 @@ interface AvatarTileProps {
 export function AvatarTile({ player, readOnly }: AvatarTileProps) {
   const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, isTouchDevice, activeDragPlayerId } = useDragState();
 
-  // Drag is desktop-only. On touch, players are placed via tap-to-place. Always disabled in read-only view.
   const { setNodeRef, transform, isDragging } = useDraggable({
     id: `roster-${player.id}`,
     data: { type: 'roster-player', playerId: player.id },
     disabled: isTouchDevice || readOnly,
   });
 
-  const isSelected = selectedPlayerId === player.id;
+  const isSelected  = selectedPlayerId === player.id;
+  const otherSelected = !!selectedPlayerId && !isSelected;
 
   const style: React.CSSProperties = {
     ...(transform ? { transform: CSS.Translate.toString(transform) } : {}),
@@ -33,7 +33,6 @@ export function AvatarTile({ player, readOnly }: AvatarTileProps) {
   function handleClick() {
     if (readOnly) return;
     if (isTouchDevice) {
-      // Any tap enters edit mode and selects the player (or deselects if already selected).
       setEditMode(true);
       setSelectedPlayerId(isSelected ? null : player.id);
     } else {
@@ -42,22 +41,31 @@ export function AvatarTile({ player, readOnly }: AvatarTileProps) {
     }
   }
 
+  const tileStyle: React.CSSProperties = isSelected
+    ? { borderColor: 'var(--selected-border)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }
+    : { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
+        opacity: otherSelected ? 0.75 : 1 };
+
+  const displayName = player.display_name || player.name;
+  const i = displayName.indexOf(' ');
+  const first  = i === -1 ? displayName : displayName.slice(0, i);
+  const second = i === -1 ? '' : displayName.slice(i + 1);
+
+  const finalStyle: React.CSSProperties = {
+    ...style,
+    ...tileStyle,
+    ...(isSelected ? { outline: '2px solid var(--selected-border)', outlineOffset: '2px' } : {}),
+  };
+
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={finalStyle}
       onClick={handleClick}
       className={`avatar-tile flex flex-col items-center justify-start rounded-lg border-2 p-1.5 select-none transition-all ${
         isTouchDevice ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
-      } ${
-        isDragging ? 'opacity-30' : ''
-      } ${
-        isSelected
-          ? 'border-blue-500 bg-blue-50 text-gray-800 ring-2 ring-blue-500 ring-offset-2'
-          : 'border-gray-200 bg-white text-gray-800'
-      }`}
+      } ${isDragging ? 'opacity-30' : ''}`}
     >
-      {/* 2-line max with ellipsis on overflow — matches grid chip layout */}
       <p
         className="text-center text-xs font-medium leading-tight w-full"
         style={{
@@ -68,13 +76,9 @@ export function AvatarTile({ player, readOnly }: AvatarTileProps) {
           wordBreak: 'break-all',
         }}
       >
-        {(() => {
-          const i = player.name.indexOf(' ');
-          if (i === -1) return player.name;
-          return <>{player.name.slice(0, i)}<br />{player.name.slice(i + 1)}</>;
-        })()}
+        {first}
+        {second && <><br />{second}</>}
       </p>
-      {/* Hidden until a player is selected OR a drag is active */}
       <div className={`transition-opacity duration-200 ${!!selectedPlayerId || !!activeDragPlayerId ? 'opacity-100' : 'opacity-0'}`}>
         <PositionDotGrid positions={player.positions} />
       </div>

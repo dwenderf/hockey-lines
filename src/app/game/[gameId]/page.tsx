@@ -53,10 +53,10 @@ export default function PublicGamePage() {
 
       const [{ data: pData }, { data: fData }, { data: dData }, { data: aData }, { data: teamData }] = await Promise.all([
         supabase
-          .from('rosters')
-          .select('id, team_id, player_id, positions, player_level, is_team_admin, is_active, players(id, name, is_goalie)')
+          .from('public_roster_view')
+          .select('*')
           .eq('team_id', gameData.team_id)
-          .order('players(name)'),
+          .order('display_name'),
         supabase.from('forward_line_slots').select('*').eq('game_id', gameId).order('line_number'),
         supabase.from('defense_line_slots').select('*').eq('game_id', gameId).order('line_number'),
         supabase.from('game_absences').select('player_id').eq('game_id', gameId),
@@ -64,11 +64,24 @@ export default function PublicGamePage() {
       ]);
 
       if (teamData) setTeamName(teamData.name);
-      if (pData) setPlayers(pData.map((r) => {
-        const p = r.players as unknown as { id: string; name: string; is_goalie: boolean };
-        return { id: p.id, name: p.name, is_goalie: p.is_goalie, roster_id: r.id, team_id: r.team_id,
-                 positions: r.positions, player_level: r.player_level, is_team_admin: r.is_team_admin, is_active: r.is_active };
-      }));
+      if (pData) setPlayers(
+        (pData as Record<string, unknown>[])
+          .filter((r) => r.is_active)
+          .map((r) => ({
+            id: r.player_id as string,
+            name: r.display_name as string,
+            is_goalie: r.is_goalie as boolean,
+            roster_id: r.id as string,
+            team_id: r.team_id as string,
+            positions: (r.positions ?? {}) as RosterPlayer['positions'],
+            player_level: r.player_level as RosterPlayer['player_level'],
+            is_team_admin: r.is_team_admin as boolean,
+            is_active: r.is_active as boolean,
+            jersey_number: (r.jersey_number ?? null) as string | null,
+            player_nickname: (r.player_nickname ?? null) as string | null,
+            display_name: r.display_name as string,
+          }))
+      );
       if (fData) setForwardSlots(fData);
       if (dData) setDefenseSlots(dData);
       if (aData) setAbsentIds(aData.map((a) => a.player_id));
@@ -155,30 +168,30 @@ export default function PublicGamePage() {
   // ── Loading / error states ────────────────────────────────────────────
   if (status === 'loading') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-400">Loading lines...</p>
+      <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: 'var(--bg-page)' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>Loading lines...</p>
       </main>
     );
   }
   if (status === 'error') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Unable to load lines. Try refreshing the page.</p>
+      <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: 'var(--bg-page)' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>Unable to load lines. Try refreshing the page.</p>
       </main>
     );
   }
   if (status === 'not-found') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Game not found.</p>
+      <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: 'var(--bg-page)' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>Game not found.</p>
       </main>
     );
   }
   if (status === 'unpublished') {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-3">
-        <p className="text-gray-700 font-medium">Lines not yet available</p>
-        <p className="text-sm text-gray-400">Check back closer to game time.</p>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3" style={{ backgroundColor: 'var(--bg-page)' }}>
+        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Lines not yet available</p>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Check back closer to game time.</p>
       </main>
     );
   }
@@ -186,32 +199,33 @@ export default function PublicGamePage() {
   // ── Player view layout ────────────────────────────────────────────────
   return (
     <DragStateContext.Provider value={dragCtxValue}>
-      <div className="flex h-screen flex-col bg-gray-50">
+      <div className="flex h-screen flex-col" style={{ backgroundColor: 'var(--bg-page)' }}>
         {/* Header */}
-        <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm flex items-center justify-between flex-shrink-0">
+        <header className="border-b px-6 py-4 shadow-sm flex items-center justify-between flex-shrink-0"
+          style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{teamName}</h1>
+            <h1 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{teamName}</h1>
             {game && (
               <>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{gameOpponent(game)}</p>
-                <p className="text-xs text-gray-400">{gameDate(game)}</p>
+                <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>{gameOpponent(game)}</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{gameDate(game)}</p>
               </>
             )}
           </div>
-          <a href="/manage" className="text-xs text-gray-400 hover:text-gray-600">Captain</a>
+          <a href="/manage" className="text-xs" style={{ color: 'var(--text-secondary)' }}>Captain</a>
         </header>
 
         {/* Sub-header — Show Positions toggle */}
-        <div className="border-b border-gray-100 bg-white px-6 py-2 flex items-center justify-end flex-shrink-0">
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+        <div className="border-b px-6 py-2 flex items-center justify-end flex-shrink-0"
+          style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none" style={{ color: 'var(--text-secondary)' }}>
             <span>Show Preferred Positions</span>
             <button
               role="switch"
               aria-checked={showDots}
               onClick={() => setShowDots((v) => !v)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${
-                showDots ? 'bg-blue-500' : 'bg-gray-300'
-              }`}
+              className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
+              style={{ backgroundColor: showDots ? 'var(--accent)' : 'var(--border)' }}
             >
               <span
                 className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
@@ -236,8 +250,8 @@ export default function PublicGamePage() {
           </div>
         </main>
 
-        {/* Bench carousel — pinned at bottom, swipeable, non-interactive */}
-        <div className="flex-shrink-0 border-t border-gray-200 bg-white overflow-hidden" style={{ height: '90px' }}>
+        {/* Bench carousel — pinned at bottom */}
+        <div className="flex-shrink-0 overflow-hidden" style={{ height: 110, backgroundColor: 'var(--bench)', borderTop: '1px solid var(--border)' }}>
           <BenchCarousel
             players={players}
             assignedPlayerIds={assignedPlayerIds}

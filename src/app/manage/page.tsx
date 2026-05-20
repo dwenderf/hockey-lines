@@ -23,13 +23,14 @@ import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
 import { DragStateContext } from '@/hooks/useDragState';
 import { LinesBoard } from '@/components/lines/LinesBoard';
 import { CollisionDialog } from '@/components/lines/CollisionDialog';
+import { PlayerEditModal } from '@/components/lines/PlayerEditModal';
 import { RosterPanel } from '@/components/roster/RosterPanel';
 import { BenchCarousel } from '@/components/roster/BenchCarousel';
 import { GameSelector } from '@/components/games/GameSelector';
 import { AddGameForm } from '@/components/games/AddGameForm';
 import { PlayerChip } from '@/components/lines/PlayerChip';
 import { Button } from '@/components/ui/Button';
-import type { SlotRef, DraggableData, DroppableData } from '@/lib/types';
+import type { SlotRef, DraggableData, DroppableData, RosterPlayer } from '@/lib/types';
 
 interface CollisionState {
   incomingPlayerId: string;
@@ -55,6 +56,7 @@ export default function ManagePage() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showDots, setShowDots] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
   const isTouchDevice = useIsTouchDevice();
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
@@ -338,47 +340,59 @@ export default function ManagePage() {
         onDragEnd={handleDragEnd}
       >
         <div
-          className="flex h-screen flex-col bg-gray-100"
+          className="flex h-screen flex-col"
+          style={{ backgroundColor: 'var(--bg-page)' }}
           onClick={(e) => {
             if (isEditMode && e.target === e.currentTarget) exitEditMode();
           }}
         >
           {/* Header */}
-          <header className="border-b border-gray-200 bg-white shadow-sm relative">
-            {/* Row 1: team name / team selector, action buttons */}
+          <header
+            className="border-b shadow-sm relative"
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
+          >
+            {/* Row 1: team tabs + action buttons */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <div className="flex items-center gap-2 min-w-0">
-                {teams.length > 1 ? (
-                  <div className="flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-                    {teams.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setSelectedTeamId(t.id)}
-                        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors shrink-0 ${
-                          selectedTeamId === t.id
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {t.name}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <h1 className="text-lg font-bold text-gray-900 truncate">
-                    {teams[0]?.name ?? ''}
-                  </h1>
-                )}
+              {/* Team tab bar */}
+              <div
+                className="flex min-w-0 flex-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+                style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+              >
+                {teams.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setSelectedTeamId(t.id)}
+                    className="font-display shrink-0 truncate rounded-md px-3 py-1.5 text-sm font-bold transition-colors"
+                    style={{
+                      maxWidth: 120,
+                      ...(selectedTeamId === t.id
+                        ? { backgroundColor: 'var(--tab-active-bg)', color: 'var(--tab-active-text)' }
+                        : { color: 'var(--tab-inactive-text)' }),
+                    }}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+                {/* + Add team placeholder */}
+                <button
+                  className="shrink-0 px-3 py-1.5 text-sm font-medium"
+                  style={{ color: 'var(--tab-inactive-text)' }}
+                  title="Add team"
+                >
+                  +
+                </button>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                  {/* Desktop-only logout */}
+
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                {/* Desktop-only logout */}
                 <Button variant="ghost" onClick={handleLogout} className="mobile-hide">
                   Logout
                 </Button>
                 {/* Mobile-only ⋯ menu */}
                 <button
                   onClick={() => setShowMobileMenu((v) => !v)}
-                  className="mobile-show hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 text-lg leading-none"
+                  className="mobile-show hidden p-2 rounded-md text-lg leading-none"
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   ⋯
                 </button>
@@ -393,12 +407,10 @@ export default function ManagePage() {
                   selectedGameId={selectedGameId}
                   onSelect={setSelectedGameId}
                 />
-                {/* Desktop-only: + Game button */}
                 <Button variant="secondary" onClick={() => setShowAddGame(true)} className="mobile-hide shrink-0">
                   + Game
                 </Button>
               </div>
-              {/* Desktop-only publish controls */}
               <div className="flex items-center gap-2 shrink-0 mobile-hide">
                 {selectedGame && (
                   selectedGame.is_published ? (
@@ -421,10 +433,14 @@ export default function ManagePage() {
 
             {/* Mobile overflow dropdown menu */}
             {showMobileMenu && (
-              <div className="mobile-show hidden absolute right-3 top-12 z-50 w-48 rounded-lg border border-gray-200 bg-white shadow-lg py-1">
+              <div
+                className="mobile-show hidden absolute right-3 top-12 z-50 w-48 rounded-lg border shadow-lg py-1"
+                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
+              >
                 <button
                   onClick={() => { setShowAddGame(true); setShowMobileMenu(false); }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="w-full text-left px-4 py-2 text-sm"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   + Add Game
                 </button>
@@ -433,13 +449,15 @@ export default function ManagePage() {
                     <>
                       <button
                         onClick={() => { copyGameLink(); setShowMobileMenu(false); }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="w-full text-left px-4 py-2 text-sm"
+                        style={{ color: 'var(--text-primary)' }}
                       >
                         {copied ? 'Copied!' : 'Copy link'}
                       </button>
                       <button
                         onClick={() => { unpublishGame(selectedGame.id); setShowMobileMenu(false); }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="w-full text-left px-4 py-2 text-sm"
+                        style={{ color: 'var(--text-primary)' }}
                       >
                         Unpublish
                       </button>
@@ -447,16 +465,18 @@ export default function ManagePage() {
                   ) : (
                     <button
                       onClick={() => { publishGame(selectedGame.id); setShowMobileMenu(false); }}
-                      className="w-full text-left px-4 py-2 text-sm text-blue-600 font-medium hover:bg-gray-50"
+                      className="w-full text-left px-4 py-2 text-sm font-medium"
+                      style={{ color: 'var(--accent)' }}
                     >
                       Publish lines
                     </button>
                   )
                 )}
-                <hr className="my-1 border-gray-100" />
+                <hr className="my-1" style={{ borderColor: 'var(--border)' }} />
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="w-full text-left px-4 py-2 text-sm"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   Logout
                 </button>
@@ -464,17 +484,19 @@ export default function ManagePage() {
             )}
           </header>
 
-          {/* Sub-header — Show Preferred Positions toggle (always visible) */}
-          <div className="border-b border-gray-100 bg-white px-4 py-2 flex items-center justify-end flex-shrink-0">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          {/* Sub-header — Show Preferred Positions toggle */}
+          <div
+            className="border-b px-4 py-2 flex items-center justify-end flex-shrink-0"
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
+          >
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none" style={{ color: 'var(--text-secondary)' }}>
               <span>Show Preferred Positions</span>
               <button
                 role="switch"
                 aria-checked={showDots}
                 onClick={() => setShowDots((v) => !v)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${
-                  showDots ? 'bg-blue-500' : 'bg-gray-300'
-                }`}
+                className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
+                style={{ backgroundColor: showDots ? 'var(--accent)' : 'var(--border)' }}
               >
                 <span
                   className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
@@ -493,8 +515,16 @@ export default function ManagePage() {
             }}
           >
             {/* Roster sidebar (desktop only) */}
-            <aside className="roster-sidebar w-64 shrink-0 overflow-hidden border-r border-gray-200 bg-white p-3 flex flex-col">
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Roster</h2>
+            <aside
+              className="roster-sidebar w-64 shrink-0 overflow-hidden border-r p-3 flex flex-col"
+              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
+            >
+              <h2
+                className="mb-2 text-xs font-bold uppercase tracking-wider"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Roster
+              </h2>
               <div className="flex-1 overflow-hidden">
                 <RosterPanel
                   players={players}
@@ -519,10 +549,11 @@ export default function ManagePage() {
                   onTapSlot={handleTapToPlace}
                   onReturnFromScratch={markAvailable}
                   onTapScratch={handleTapToScratch}
+                  onEditPlayer={setEditingPlayer}
                   showDots={showDots}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-gray-400">
+                <div className="flex h-full items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
                   <div className="text-center">
                     <p className="text-lg">No game selected</p>
                     <p className="text-sm">Create a game to start building lines</p>
@@ -533,7 +564,7 @@ export default function ManagePage() {
             </main>
 
             {/* Bench carousel (mobile/touch only — hidden by default, shown via CSS) */}
-            <div className="bench-carousel-wrapper hidden">
+            <div className="bench-carousel-wrapper hidden" style={{ height: 110 }}>
               <BenchCarousel
                 players={players}
                 assignedPlayerIds={assignedPlayerIds}
@@ -562,6 +593,7 @@ export default function ManagePage() {
           <CollisionDialog
             incomingPlayer={incoming}
             occupantPlayer={occupant}
+            targetPosition={collision.targetSlotRef.position}
             canSwap={collision.sourceSlotRef !== null}
             onReplace={handleCollisionReplace}
             onSwap={handleCollisionSwap}
@@ -569,6 +601,15 @@ export default function ManagePage() {
           />
         );
       })()}
+
+      {/* Player edit modal */}
+      {editingPlayer && (
+        <PlayerEditModal
+          playerId={editingPlayer.id}
+          playerName={editingPlayer.display_name || editingPlayer.name}
+          onClose={() => setEditingPlayer(null)}
+        />
+      )}
 
       <AddGameForm
         open={showAddGame}

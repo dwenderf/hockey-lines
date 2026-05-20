@@ -1,5 +1,4 @@
 import { LineRow } from './LineRow';
-import { Button } from '@/components/ui/Button';
 import type { RosterPlayer, ForwardLineSlot, SlotRef } from '@/lib/types';
 import { FORWARD_POSITIONS, POSITION_TO_COLUMN } from '@/lib/constants';
 
@@ -10,15 +9,16 @@ interface ForwardLinesProps {
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
   onTapSlot?: (slotRef: SlotRef) => void;
+  onEditPlayer?: (player: RosterPlayer) => void;
   showDots?: boolean;
 }
 
-export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, showDots }: ForwardLinesProps) {
+export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, onEditPlayer, showDots }: ForwardLinesProps) {
   return (
     <div>
       <div className="grid grid-cols-3 gap-2 mb-2">
         {FORWARD_POSITIONS.map((pos) => (
-          <div key={pos} className="flex-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <div key={pos} className="flex-1 text-center text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
             {pos}
           </div>
         ))}
@@ -31,6 +31,7 @@ export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, o
             readOnly={readOnly}
             onRemoveFromSlot={onRemoveFromSlot}
             onTapSlot={onTapSlot}
+            onEditPlayer={onEditPlayer}
             showDots={showDots}
             slots={FORWARD_POSITIONS.map((pos) => ({
               position: pos,
@@ -45,7 +46,8 @@ export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, o
       {!readOnly && onAddLine && slots.length < 4 && (
         <button
           onClick={onAddLine}
-          className="mt-2 text-xs text-blue-500 hover:text-blue-700"
+          className="mt-2 text-xs"
+          style={{ color: 'var(--accent)' }}
         >
           + Add line {slots.length + 1}
         </button>

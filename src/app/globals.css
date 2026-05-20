@@ -1,31 +1,105 @@
 @import "tailwindcss";
 
+/* ── Class-based dark mode (Tailwind v4 equivalent of darkMode: 'class') ─── */
+@variant dark (&:is(.dark, .dark *));
+
+/* ── Semantic theme tokens ─────────────────────────────────────────────────
+   :root  = Locker Room (light)
+   .dark  = Ice & Steel (dark)
+   ───────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-page: #FAF7F2;
+  --surface: #FFFFFF;
+  --bench: #EDE8E0;
+  --accent: #7C1C2E;
+  --text-primary: #3D1A00;
+  --text-secondary: #9A8070;
+  --border: #D4C9BB;
+  --tab-active-bg: #7C1C2E;
+  --tab-active-text: #F5C842;
+  --tab-inactive-text: #9A8070;
+  --dot-preferred: #22C55E;
+  --dot-acceptable: #3B82F6;
+  --dot-avoid: #EF4444;
+  --dot-unset: #D4C9BB;
+  --selected-bg: #FFFFFF;
+  --selected-border: #7C1C2E;
+  --selected-text: #3D1A00;
+  --edit-badge-bg: #F5C842;
+  --edit-badge-icon: #3D1A00;
+  --pref-tint-preferred: rgba(34,197,94,0.10);
+  --pref-tint-acceptable: rgba(59,130,246,0.10);
+  --pref-tint-avoid: rgba(239,68,68,0.10);
+  --pref-tint-unset: rgba(180,165,150,0.15);
 }
 
+.dark {
+  --bg-page: #0D1B2A;
+  --surface: #1E3A5F;
+  --bench: #0A1520;
+  --accent: #7ECFCF;
+  --text-primary: #C8E6FF;
+  --text-secondary: #4A7FAA;
+  --border: #2A5A8C;
+  --tab-active-bg: #7ECFCF;
+  --tab-active-text: #0D1B2A;
+  --tab-inactive-text: #4A7FAA;
+  --dot-preferred: #4ADE80;
+  --dot-acceptable: #60A5FA;
+  --dot-avoid: #F87171;
+  --dot-unset: #2A5A8C;
+  --selected-bg: #FFFFFF;
+  --selected-border: #7ECFCF;
+  --selected-text: #0D1B2A;
+  --edit-badge-bg: #7ECFCF;
+  --edit-badge-icon: #0D1B2A;
+  --pref-tint-preferred: rgba(74,222,128,0.12);
+  --pref-tint-acceptable: rgba(96,165,250,0.12);
+  --pref-tint-avoid: rgba(248,113,113,0.12);
+  --pref-tint-unset: rgba(58,90,122,0.15);
+}
+
+/* ── Tailwind color + font tokens ─────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-background: var(--bg-page);
+  --color-foreground: var(--text-primary);
+  --color-bg-page: var(--bg-page);
+  --color-surface: var(--surface);
+  --color-bench: var(--bench);
+  --color-accent: var(--accent);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border);
+  --color-tab-active-bg: var(--tab-active-bg);
+  --color-tab-active-text: var(--tab-active-text);
+  --color-tab-inactive-text: var(--tab-inactive-text);
+  --color-dot-preferred: var(--dot-preferred);
+  --color-dot-acceptable: var(--dot-acceptable);
+  --color-dot-avoid: var(--dot-avoid);
+  --color-dot-unset: var(--dot-unset);
+  --color-selected-bg: var(--selected-bg);
+  --color-selected-border: var(--selected-border);
+  --color-selected-text: var(--selected-text);
+  --color-edit-badge-bg: var(--edit-badge-bg);
+  --color-edit-badge-icon: var(--edit-badge-icon);
+  --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-rajdhani);
+  --font-body: var(--font-dm-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-dm-sans, Arial, Helvetica, sans-serif);
 }
 
-/* ── Slot tile entry animation (touch only) ────────────────────────── */
+/* ── Font display utility ─────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-rajdhani, sans-serif);
+}
+
+/* ── Slot tile entry animation (touch only) ────────────────────────────── */
 @keyframes tile-enter {
   from { opacity: 0; transform: scale(0.85); }
   to   { opacity: 1; transform: scale(1); }
@@ -37,9 +111,8 @@ body {
   }
 }
 
-/* ── Flash-glow: player lands in a slot ─────────────────────────────── */
-/* Single amber glow — distinct from all three preference colors.        */
-/* No transform: keeps clear of transition-all which would compete.      */
+/* ── Flash-glow: player lands in a slot ─────────────────────────────────── */
+/* Single amber glow — distinct from all three preference colors.            */
 @keyframes landing-flash {
   0%   { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.8), 0 0 18px 4px rgba(245, 158, 11, 0.4); }
   100% { box-shadow: none; }
@@ -49,7 +122,7 @@ body {
   animation: landing-flash 0.9s ease-out forwards;
 }
 
-/* ── Carousel ping: player returned to bench ────────────────────────── */
+/* ── Carousel ping: player returned to bench ────────────────────────────── */
 @keyframes carousel-ping {
   0%   { background-color: rgba(245, 158, 11, 0.12); }
   100% { background-color: transparent; }
@@ -59,13 +132,13 @@ body {
   animation: carousel-ping 1s ease-out forwards;
 }
 
-/* ── Mobile / touch show-hide helpers ──────────────────────────────── */
+/* ── Mobile / touch show-hide helpers ──────────────────────────────────── */
 @media (pointer: coarse) {
   .mobile-hide { display: none !important; }
   .mobile-show { display: block !important; }
 }
 
-/* ── Mobile / touch layout ──────────────────────────────────────────── */
+/* ── Mobile / touch layout ──────────────────────────────────────────────── */
 @media (pointer: coarse) {
   .manage-layout {
     flex-direction: column !important;
@@ -84,10 +157,8 @@ body {
   .bench-carousel-wrapper {
     display: block !important;
     flex-shrink: 0;
-    height: 90px;
     overflow: hidden;
-    border-top: 1px solid #e5e7eb;
-    background: white;
+    border-top: 1px solid var(--border);
+    background: var(--bench);
   }
 }
-
