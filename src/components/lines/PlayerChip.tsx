@@ -139,23 +139,32 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
       }`}
       {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
-      <div className="flex items-start justify-between gap-1">
-        <p
-          className={`text-xs font-medium leading-tight flex-1 ${inactive ? 'line-through text-gray-400' : ''}`}
-          style={nameClamp}
-        >
-          {player.name}
-          {inactive && <span className="ml-1 no-underline not-italic text-gray-400">(inactive)</span>}
+      {readOnly ? (
+        // Player view: centered two-line name (no × button possible in read-only)
+        <p className={`text-xs font-medium leading-tight text-center w-full ${inactive ? 'line-through text-gray-400' : ''}`} style={nameClamp}>
+          {(() => { const [first, last] = splitName(player.name); return <>{first}{last && <><br />{last}</>}</>; })()}
+          {inactive && <span className="ml-1 not-italic text-gray-400">(inactive)</span>}
         </p>
-        {showRemove && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove!(); }}
-            className="shrink-0 text-gray-400 hover:text-red-500 leading-none mt-0.5"
+      ) : (
+        // Captain view: left-aligned with optional × remove button
+        <div className="flex items-start justify-between gap-1">
+          <p
+            className={`text-xs font-medium leading-tight flex-1 ${inactive ? 'line-through text-gray-400' : ''}`}
+            style={nameClamp}
           >
-            ×
-          </button>
-        )}
-      </div>
+            {player.name}
+            {inactive && <span className="ml-1 no-underline not-italic text-gray-400">(inactive)</span>}
+          </p>
+          {showRemove && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove!(); }}
+              className="shrink-0 text-gray-400 hover:text-red-500 leading-none mt-0.5"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
       {/* Dot grid — fades in during a drag so the captain can read position fit at a glance */}
       <div className={`transition-opacity duration-200 ${showDesktopDots ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
         <PositionDotGrid positions={player.positions} />
