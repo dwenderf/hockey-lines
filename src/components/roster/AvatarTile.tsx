@@ -75,8 +75,9 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           style={{
             position: 'absolute',
-            top: -6,
-            right: -6,
+            top: 0,
+            right: 0,
+            transform: 'translate(50%, -50%)',
             padding: 8,
             background: 'none',
             border: 'none',
