@@ -74,8 +74,9 @@ function RemoveBadge({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
       onClick={onClick}
       style={{
         position: 'absolute',
-        top: -10,
-        right: -10,
+        top: 0,
+        right: 0,
+        transform: 'translate(50%, -50%)',
         padding: 10,
         background: 'none',
         border: 'none',
