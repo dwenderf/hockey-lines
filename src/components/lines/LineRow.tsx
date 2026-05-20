@@ -15,11 +15,10 @@ interface LineRowProps {
   readOnly?: boolean;
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onTapSlot?: (slotRef: SlotRef) => void;
-  onEditPlayer?: (player: RosterPlayer) => void;
   showDots?: boolean;
 }
 
-export function LineRow({ slots, playersById, readOnly, onRemoveFromSlot, onTapSlot, onEditPlayer, showDots }: LineRowProps) {
+export function LineRow({ slots, playersById, readOnly, onRemoveFromSlot, onTapSlot, showDots }: LineRowProps) {
   return (
     <div className="grid grid-cols-3 gap-2">
       {slots.map((s) => {
@@ -33,7 +32,6 @@ export function LineRow({ slots, playersById, readOnly, onRemoveFromSlot, onTapS
             readOnly={readOnly}
             onRemove={onRemoveFromSlot ? () => onRemoveFromSlot(slotRef) : undefined}
             onTapSlot={onTapSlot ? () => onTapSlot(slotRef) : undefined}
-            onEditPlayer={onEditPlayer}
             showDots={showDots}
           />
         );

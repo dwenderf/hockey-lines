@@ -11,7 +11,6 @@ interface PlayerChipProps {
   fromSlot?: SlotRef;
   readOnly?: boolean;
   onRemove?: () => void;
-  onEditPlayer?: () => void;
   isOverlay?: boolean;
   preferenceClass?: string;
   /** The player's preference for the slot they're in — drives the top bar color. */
@@ -67,10 +66,10 @@ function PrefTopBar({ pref }: { pref: Preference }) {
   );
 }
 
-function EditBadge({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
+function RemoveBadge({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
   return (
     <button
-      aria-label="Edit player"
+      aria-label="Remove player"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
       style={{
@@ -93,17 +92,18 @@ function EditBadge({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 12,
+          fontSize: 14,
           lineHeight: 1,
+          fontWeight: 'bold',
         }}
       >
-        <span style={{ color: 'var(--edit-badge-icon)' }}>✎</span>
+        <span style={{ color: 'var(--edit-badge-icon)' }}>×</span>
       </div>
     </button>
   );
 }
 
-export function PlayerChip({ player, fromSlot, readOnly, onRemove, onEditPlayer, isOverlay, slotPref, dimmed, showDots }: PlayerChipProps) {
+export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, slotPref, dimmed, showDots }: PlayerChipProps) {
   const { isTouchDevice, isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, activeDragPlayerId } = useDragState();
 
   const draggableId = fromSlot
@@ -163,21 +163,9 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, onEditPlayer,
         {/* Preference top bar — always visible on filled chips */}
         {!inactive && <PrefTopBar pref={slotPref ?? 'unset'} />}
 
-        {/* Edit badge — only on selected chip */}
-        {isSelected && onEditPlayer && (
-          <EditBadge onClick={(e) => { e.stopPropagation(); onEditPlayer(); }} />
-        )}
-
-        {/* × remove badge */}
+        {/* Yellow × badge — remove from slot */}
         {showRemove && (
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); onRemove!(); }}
-            className="absolute -top-3 -right-3 w-7 h-7 rounded-full flex items-center justify-center text-base font-bold shadow-md z-10 select-none"
-            style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-page)', lineHeight: 1 }}
-          >
-            ×
-          </button>
+          <RemoveBadge onClick={(e) => { e.stopPropagation(); onRemove!(); }} />
         )}
 
         <p className="text-xs font-medium leading-tight text-center w-full" style={nameClamp}>
@@ -220,9 +208,9 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, onEditPlayer,
       {/* Preference top bar */}
       {!isOverlay && !inactive && isInSlot && <PrefTopBar pref={slotPref ?? 'unset'} />}
 
-      {/* Edit badge on selected desktop chips */}
-      {isSelected && isInSlot && onEditPlayer && (
-        <EditBadge onClick={(e) => { e.stopPropagation(); onEditPlayer(); }} />
+      {/* Yellow × badge — remove from slot */}
+      {showRemove && (
+        <RemoveBadge onClick={(e) => { e.stopPropagation(); onRemove!(); }} />
       )}
 
       <p
@@ -233,16 +221,6 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, onEditPlayer,
         {second && <><br />{second}</>}
         {inactive && <span className="ml-1 not-italic" style={{ color: 'var(--text-secondary)' }}>(inactive)</span>}
       </p>
-
-      {showRemove && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onRemove!(); }}
-          className="absolute top-0.5 right-0.5 hover:opacity-70 leading-none"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          ×
-        </button>
-      )}
 
       <div className={`transition-opacity duration-200 ${showDesktopDots ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
         <PositionDotGrid positions={player.positions} />

@@ -23,7 +23,6 @@ import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
 import { DragStateContext } from '@/hooks/useDragState';
 import { LinesBoard } from '@/components/lines/LinesBoard';
 import { CollisionDialog } from '@/components/lines/CollisionDialog';
-import { PlayerEditModal } from '@/components/lines/PlayerEditModal';
 import { RosterPanel } from '@/components/roster/RosterPanel';
 import { BenchCarousel } from '@/components/roster/BenchCarousel';
 import { GameSelector } from '@/components/games/GameSelector';
@@ -56,8 +55,7 @@ export default function ManagePage() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showDots, setShowDots] = useState(false);
-  const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
-  const isTouchDevice = useIsTouchDevice();
+const isTouchDevice = useIsTouchDevice();
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
 
@@ -549,7 +547,6 @@ export default function ManagePage() {
                   onTapSlot={handleTapToPlace}
                   onReturnFromScratch={markAvailable}
                   onTapScratch={handleTapToScratch}
-                  onEditPlayer={setEditingPlayer}
                   showDots={showDots}
                 />
               ) : (
@@ -601,15 +598,6 @@ export default function ManagePage() {
           />
         );
       })()}
-
-      {/* Player edit modal */}
-      {editingPlayer && (
-        <PlayerEditModal
-          playerId={editingPlayer.id}
-          playerName={editingPlayer.display_name || editingPlayer.name}
-          onClose={() => setEditingPlayer(null)}
-        />
-      )}
 
       <AddGameForm
         open={showAddGame}
