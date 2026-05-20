@@ -221,6 +221,8 @@ export default function ManagePage() {
   const handleRemoveFromSlot = useCallback(
     (slotRef: SlotRef) => {
       updateSlotByRef(slotRef, null);
+      setSelectedPlayerId(null);
+      setIsEditMode(false);
     },
     [updateSlotByRef]
   );

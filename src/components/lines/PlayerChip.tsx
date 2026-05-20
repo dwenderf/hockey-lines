@@ -61,10 +61,10 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   // When selected, suppress position-fit color so the × badge is the sole selection signal.
   const borderedClass = inactive
-    ? 'bg-gray-50 border-gray-200 opacity-60'
+    ? 'bg-gray-50 border-gray-200 text-gray-800 opacity-60'
     : isSelected
-    ? 'bg-white border-gray-700'
-    : (preferenceClass ?? 'bg-white border-gray-300');
+    ? 'bg-white border-gray-700 text-gray-800'
+    : (preferenceClass ?? 'bg-white border-gray-300 text-gray-800');
 
   // ── Mobile slot chip (normal + edit mode unified) ─────────────────────
   // Fixed height matches the carousel tile. Position-fit border always visible.
@@ -132,30 +132,25 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
     <div
       ref={!isOverlay ? setNodeRef : undefined}
       style={!isOverlay ? style : undefined}
-      className={`slot-tile flex flex-col gap-0.5 rounded-lg border-2 px-2 py-1.5 text-sm font-medium shadow-sm w-full select-none ${borderedClass} ${
+      className={`relative slot-tile flex flex-col gap-0.5 rounded-lg border-2 px-2 py-1.5 text-sm font-medium shadow-sm w-full select-none ${borderedClass} ${
         isDragging ? 'opacity-30' : ''
       } ${!readOnly && !isOverlay && !inactive ? 'cursor-grab active:cursor-grabbing' : ''} ${
         isOverlay ? 'shadow-lg' : ''
       }`}
       {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
-      <div className="flex items-start justify-between gap-1">
-        <p
-          className={`text-xs font-medium leading-tight flex-1 ${inactive ? 'line-through text-gray-400' : ''}`}
-          style={nameClamp}
+      <p className={`text-xs font-medium leading-tight text-center w-full ${inactive ? 'line-through text-gray-400' : ''}`} style={nameClamp}>
+        {(() => { const [first, last] = splitName(player.name); return <>{first}{last && <><br />{last}</>}</>; })()}
+        {inactive && <span className="ml-1 not-italic text-gray-400">(inactive)</span>}
+      </p>
+      {showRemove && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove!(); }}
+          className="absolute top-0.5 right-0.5 text-gray-400 hover:text-red-500 leading-none"
         >
-          {player.name}
-          {inactive && <span className="ml-1 no-underline not-italic text-gray-400">(inactive)</span>}
-        </p>
-        {showRemove && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove!(); }}
-            className="shrink-0 text-gray-400 hover:text-red-500 leading-none mt-0.5"
-          >
-            ×
-          </button>
-        )}
-      </div>
+          ×
+        </button>
+      )}
       {/* Dot grid — fades in during a drag so the captain can read position fit at a glance */}
       <div className={`transition-opacity duration-200 ${showDesktopDots ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
         <PositionDotGrid positions={player.positions} />

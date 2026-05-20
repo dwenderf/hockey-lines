@@ -53,8 +53,8 @@ export function AvatarTile({ player, readOnly }: AvatarTileProps) {
         isDragging ? 'opacity-30' : ''
       } ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2'
-          : 'border-gray-200 bg-white'
+          ? 'border-blue-500 bg-blue-50 text-gray-800 ring-2 ring-blue-500 ring-offset-2'
+          : 'border-gray-200 bg-white text-gray-800'
       }`}
     >
       {/* 2-line max with ellipsis on overflow — matches grid chip layout */}
