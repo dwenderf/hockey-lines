@@ -61,10 +61,10 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, pr
 
   // When selected, suppress position-fit color so the × badge is the sole selection signal.
   const borderedClass = inactive
-    ? 'bg-gray-50 border-gray-200 opacity-60'
+    ? 'bg-gray-50 border-gray-200 text-gray-800 opacity-60'
     : isSelected
-    ? 'bg-white border-gray-700'
-    : (preferenceClass ?? 'bg-white border-gray-300');
+    ? 'bg-white border-gray-700 text-gray-800'
+    : (preferenceClass ?? 'bg-white border-gray-300 text-gray-800');
 
   // ── Mobile slot chip (normal + edit mode unified) ─────────────────────
   // Fixed height matches the carousel tile. Position-fit border always visible.
