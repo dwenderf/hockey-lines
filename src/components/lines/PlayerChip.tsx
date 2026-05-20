@@ -111,12 +111,8 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
 
   const showRemove = onRemove && !readOnly && !isOverlay && (!isTouchDevice || (isEditMode && isSelected));
 
-  // Border color for selected vs normal
   const selectedBorderColor = 'var(--selected-border)';
-  const defaultBorderColor  = slotPref === 'preferred'  ? 'var(--dot-preferred)'
-    : slotPref === 'acceptable' ? 'var(--dot-acceptable)'
-    : slotPref === 'refused'    ? 'var(--dot-avoid)'
-    : 'var(--border)';
+  const defaultBorderColor  = 'var(--border)';
 
   const { first, second } = playerLabel(player);
 
