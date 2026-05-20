@@ -20,6 +20,8 @@ export interface RosterEntry {
   player_id: string;
   positions: Partial<Record<Position, Exclude<Preference, 'unset'>>>;
   player_level: 1 | 2 | 3 | 4 | 5 | null;  // captain-only; never render on public view
+  jersey_number: string | null;
+  player_nickname: string | null;
   is_team_admin: boolean;
   is_active: boolean;
 }
@@ -30,6 +32,8 @@ export interface RosterPlayer extends Player {
   team_id: string;
   positions: Partial<Record<Position, Exclude<Preference, 'unset'>>>;
   player_level: 1 | 2 | 3 | 4 | 5 | null;
+  jersey_number: string | null;
+  player_nickname: string | null;
   is_team_admin: boolean;
   is_active: boolean;
 }
