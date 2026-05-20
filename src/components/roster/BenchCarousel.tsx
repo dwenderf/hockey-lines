@@ -9,9 +9,10 @@ interface BenchCarouselProps {
   assignedPlayerIds: Set<string>;
   absentPlayerIds: Set<string>;
   readOnly?: boolean;
+  onEditPlayer?: (player: RosterPlayer) => void;
 }
 
-export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, readOnly }: BenchCarouselProps) {
+export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, readOnly, onEditPlayer }: BenchCarouselProps) {
   const benchPlayers = players.filter(
     (p) => p.is_active && !p.is_goalie && !absentPlayerIds.has(p.id) && !assignedPlayerIds.has(p.id)
   );
@@ -64,7 +65,7 @@ export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, rea
             </div>
           ) : (
             benchPlayers.map((player) => (
-              <AvatarTile key={player.id} player={player} readOnly={readOnly} />
+              <AvatarTile key={player.id} player={player} readOnly={readOnly} onEdit={onEditPlayer ? () => onEditPlayer(player) : undefined} />
             ))
           )}
         </div>

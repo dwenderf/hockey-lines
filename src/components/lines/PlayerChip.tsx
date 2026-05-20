@@ -38,7 +38,7 @@ function splitName(name: string): [string, string] {
 
 function playerLabel(player: RosterPlayer): { first: string; second: string } {
   const displayName = player.display_name || player.name;
-  const jersey = player.jersey_number ?? '##';
+  const jersey = player.jersey_number ?? ' ';
   const full = `${jersey} ${displayName}`;
   const [first, second] = splitName(full);
   return { first, second };
@@ -83,22 +83,7 @@ function RemoveBadge({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
         zIndex: 20,
       }}
     >
-      <div
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          backgroundColor: 'var(--edit-badge-bg)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 14,
-          lineHeight: 1,
-          fontWeight: 'bold',
-        }}
-      >
-        <span style={{ color: 'var(--edit-badge-icon)' }}>×</span>
-      </div>
+      <span style={{ color: 'var(--text-secondary)', fontSize: 18, lineHeight: 1, fontWeight: 'bold' }}>×</span>
     </button>
   );
 }

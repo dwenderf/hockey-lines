@@ -9,9 +9,10 @@ import type { RosterPlayer } from '@/lib/types';
 interface AvatarTileProps {
   player: RosterPlayer;
   readOnly?: boolean;
+  onEdit?: () => void;
 }
 
-export function AvatarTile({ player, readOnly }: AvatarTileProps) {
+export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
   const { isEditMode, setEditMode, selectedPlayerId, setSelectedPlayerId, isTouchDevice, activeDragPlayerId } = useDragState();
 
   const { setNodeRef, transform, isDragging } = useDraggable({
@@ -62,10 +63,42 @@ export function AvatarTile({ player, readOnly }: AvatarTileProps) {
       ref={setNodeRef}
       style={finalStyle}
       onClick={handleClick}
-      className={`avatar-tile flex flex-col items-center justify-start rounded-lg border-2 p-1.5 select-none transition-all ${
+      className={`avatar-tile relative flex flex-col items-center justify-start rounded-lg border-2 p-1.5 select-none transition-all ${
         isTouchDevice ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
       } ${isDragging ? 'opacity-30' : ''}`}
     >
+      {/* Edit badge — top-left, shown when selected */}
+      {isSelected && onEdit && (
+        <button
+          aria-label="Edit player"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          style={{
+            position: 'absolute',
+            top: -10,
+            left: -10,
+            padding: 10,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            zIndex: 20,
+          }}
+        >
+          <div style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            backgroundColor: 'var(--edit-badge-bg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 12,
+            lineHeight: 1,
+          }}>
+            <span style={{ color: 'var(--edit-badge-icon)' }}>✎</span>
+          </div>
+        </button>
+      )}
       <p
         className="text-center text-xs font-medium leading-tight w-full"
         style={{
