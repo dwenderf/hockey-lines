@@ -75,9 +75,9 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           style={{
             position: 'absolute',
-            top: -10,
-            left: -10,
-            padding: 10,
+            top: -6,
+            right: -6,
+            padding: 8,
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -88,14 +88,14 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
             width: 24,
             height: 24,
             borderRadius: '50%',
-            backgroundColor: 'var(--edit-badge-bg)',
+            backgroundColor: 'var(--accent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 12,
             lineHeight: 1,
           }}>
-            <span style={{ color: 'var(--edit-badge-icon)' }}>✎</span>
+            <span style={{ color: 'white' }}>✎</span>
           </div>
         </button>
       )}
