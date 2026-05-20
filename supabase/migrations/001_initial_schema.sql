@@ -23,12 +23,12 @@ create table rosters (
   player_id      uuid not null references players(id) on delete cascade,
   positions      jsonb not null default '{}',
   -- positions shape: { "LW": "preferred"|"acceptable"|"refused", ... }
-  player_level   smallint check (player_level between 1 and 5),
-  is_team_admin  bool not null default false,
-  is_active      bool not null default true,
-  jersey_number  text,
+  player_level    smallint check (player_level between 1 and 5),
+  jersey_number   text,
   player_nickname text,
-  created_at     timestamptz not null default now(),
+  is_team_admin   bool not null default false,
+  is_active       bool not null default true,
+  created_at      timestamptz not null default now(),
   unique (team_id, player_id)
 );
 
@@ -233,6 +233,7 @@ grant select on public_roster_view to anon;
 -- alter publication supabase_realtime add table defense_line_slots;
 -- alter publication supabase_realtime add table players;
 -- alter publication supabase_realtime add table game_absences;
+-- alter publication supabase_realtime add table rosters;
 -- ============================================================
 
 -- ============================================================
