@@ -37,11 +37,10 @@ function splitName(name: string): [string, string] {
   return i === -1 ? [name, ''] : [name.slice(0, i), name.slice(i + 1)];
 }
 
-/** Returns the display label: "#11 Brett N." or just the display_name */
 function playerLabel(player: RosterPlayer): { first: string; second: string } {
   const displayName = player.display_name || player.name;
-  const prefix = player.jersey_number ? `#${player.jersey_number} ` : '';
-  const full = prefix + displayName;
+  const jersey = player.jersey_number ?? '##';
+  const full = `${jersey} ${displayName}`;
   const [first, second] = splitName(full);
   return { first, second };
 }

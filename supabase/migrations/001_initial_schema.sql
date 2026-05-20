@@ -197,7 +197,7 @@ create or replace function get_display_name(
     when p_nickname is not null and p_nickname <> '' then p_nickname
     else split_part(p_name, ' ', 1) ||
          case when length(split_part(p_name, ' ', 2)) > 0
-              then ' ' || left(split_part(p_name, ' ', 2), 1) || '.'
+              then ' ' || left(split_part(p_name, ' ', 2), 1)
               else '' end
   end
 $$;

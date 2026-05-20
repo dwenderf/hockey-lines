@@ -31,7 +31,8 @@ function PlayerPreviewCard({
 }) {
   const pref = (player.positions[targetPosition] as Preference) ?? 'unset';
   const displayName = player.display_name || player.name;
-  const label = player.jersey_number ? `#${player.jersey_number} ${displayName}` : displayName;
+  const jersey = player.jersey_number ?? '##';
+  const label = `${jersey} ${displayName}`;
 
   return (
     <div
