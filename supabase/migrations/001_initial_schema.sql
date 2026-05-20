@@ -194,6 +194,7 @@ create policy "auth write" on leagues
 -- alter publication supabase_realtime add table defense_line_slots;
 -- alter publication supabase_realtime add table players;
 -- alter publication supabase_realtime add table game_absences;
+-- alter publication supabase_realtime add table rosters;
 -- ============================================================
 
 -- ============================================================
