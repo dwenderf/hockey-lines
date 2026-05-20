@@ -4,6 +4,23 @@ import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { RosterPlayer, Position, Preference } from '@/lib/types';
 
+function mapViewRow(r: Record<string, unknown>): RosterPlayer {
+  return {
+    id: r.player_id as string,
+    name: r.display_name as string,
+    is_goalie: r.is_goalie as boolean,
+    roster_id: r.id as string,
+    team_id: r.team_id as string,
+    positions: (r.positions ?? {}) as RosterPlayer['positions'],
+    player_level: r.player_level as RosterPlayer['player_level'],
+    is_team_admin: r.is_team_admin as boolean,
+    is_active: r.is_active as boolean,
+    jersey_number: (r.jersey_number ?? null) as string | null,
+    player_nickname: (r.player_nickname ?? null) as string | null,
+    display_name: r.display_name as string,
+  };
+}
+
 export function usePlayers(teamId: string | null) {
   const [players, setPlayers] = useState<RosterPlayer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,41 +29,13 @@ export function usePlayers(teamId: string | null) {
     if (!teamId) return;
     const supabase = createClient();
     const { data } = await supabase
-      .from('rosters')
-      .select(`
-        id,
-        team_id,
-        player_id,
-        positions,
-        player_level,
-        jersey_number,
-        player_nickname,
-        is_team_admin,
-        is_active,
-        players ( id, name, is_goalie )
-      `)
+      .from('public_roster_view')
+      .select('*')
       .eq('team_id', teamId)
-      .order('players(name)');
+      .order('display_name');
 
     if (data) {
-      setPlayers(
-        data.map((r) => {
-          const p = r.players as unknown as { id: string; name: string; is_goalie: boolean };
-          return {
-            id: p.id,
-            name: p.name,
-            is_goalie: p.is_goalie,
-            roster_id: r.id,
-            team_id: r.team_id,
-            positions: r.positions,
-            player_level: r.player_level,
-            jersey_number: r.jersey_number ?? null,
-            player_nickname: r.player_nickname ?? null,
-            is_team_admin: r.is_team_admin,
-            is_active: r.is_active,
-          };
-        })
-      );
+      setPlayers((data as Record<string, unknown>[]).map(mapViewRow));
     }
     setLoading(false);
   }, [teamId]);
@@ -60,7 +49,6 @@ export function usePlayers(teamId: string | null) {
       if (!teamId) return;
       const supabase = createClient();
 
-      // Insert player identity row
       const { data: player } = await supabase
         .from('players')
         .insert({ name, is_goalie: isGoalie })
@@ -68,7 +56,6 @@ export function usePlayers(teamId: string | null) {
         .single();
       if (!player) return;
 
-      // Check if this player has a roster entry elsewhere to copy positions from
       const { data: existingRoster } = await supabase
         .from('rosters')
         .select('positions')
@@ -77,37 +64,17 @@ export function usePlayers(teamId: string | null) {
         .limit(1)
         .single();
 
-      // Insert roster entry with copied positions as defaults
-      const { data: roster } = await supabase
+      await supabase
         .from('rosters')
         .insert({
           team_id: teamId,
           player_id: player.id,
           positions: existingRoster?.positions ?? {},
-        })
-        .select()
-        .single();
+        });
 
-      if (roster) {
-        const rosterPlayer: RosterPlayer = {
-          id: player.id,
-          name: player.name,
-          is_goalie: player.is_goalie,
-          roster_id: roster.id,
-          team_id: roster.team_id,
-          positions: roster.positions,
-          player_level: roster.player_level,
-          jersey_number: roster.jersey_number ?? null,
-          player_nickname: roster.player_nickname ?? null,
-          is_team_admin: roster.is_team_admin,
-          is_active: roster.is_active,
-        };
-        setPlayers((prev) =>
-          [...prev, rosterPlayer].sort((a, b) => a.name.localeCompare(b.name))
-        );
-      }
+      await fetch();
     },
-    [teamId]
+    [teamId, fetch]
   );
 
   const addExistingPlayer = useCallback(
@@ -115,15 +82,6 @@ export function usePlayers(teamId: string | null) {
       if (!teamId) return;
       const supabase = createClient();
 
-      // Get player identity
-      const { data: player } = await supabase
-        .from('players')
-        .select('id, name, is_goalie')
-        .eq('id', playerId)
-        .single();
-      if (!player) return;
-
-      // Copy positions from most recent roster entry for this player
       const { data: existingRoster } = await supabase
         .from('rosters')
         .select('positions')
@@ -132,39 +90,19 @@ export function usePlayers(teamId: string | null) {
         .limit(1)
         .single();
 
-      const { data: roster } = await supabase
+      await supabase
         .from('rosters')
         .insert({
           team_id: teamId,
           player_id: playerId,
           positions: existingRoster?.positions ?? {},
-        })
-        .select()
-        .single();
+        });
 
-      if (roster) {
-        const rosterPlayer: RosterPlayer = {
-          id: player.id,
-          name: player.name,
-          is_goalie: player.is_goalie,
-          roster_id: roster.id,
-          team_id: roster.team_id,
-          positions: roster.positions,
-          player_level: roster.player_level,
-          jersey_number: roster.jersey_number ?? null,
-          player_nickname: roster.player_nickname ?? null,
-          is_team_admin: roster.is_team_admin,
-          is_active: roster.is_active,
-        };
-        setPlayers((prev) =>
-          [...prev, rosterPlayer].sort((a, b) => a.name.localeCompare(b.name))
-        );
-      }
+      await fetch();
     },
-    [teamId]
+    [teamId, fetch]
   );
 
-  // Deactivate rather than delete — preserves historical line assignments
   const deactivatePlayer = useCallback(async (rosterId: string) => {
     const supabase = createClient();
     await supabase.from('rosters').update({ is_active: false }).eq('id', rosterId);

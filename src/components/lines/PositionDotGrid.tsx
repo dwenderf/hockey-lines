@@ -3,10 +3,10 @@ import type { Position } from '@/lib/types';
 const FORWARD_POSITIONS: Position[] = ['LW', 'C', 'RW'];
 const DEFENSE_POSITIONS: Position[] = ['LD', 'RD'];
 
-const DOT_COLORS: Record<string, string> = {
-  preferred: 'bg-green-500',
-  acceptable: 'bg-blue-500',
-  refused: 'bg-red-400',
+const PREF_TO_VAR: Record<string, string> = {
+  preferred:  'var(--dot-preferred)',
+  acceptable: 'var(--dot-acceptable)',
+  refused:    'var(--dot-avoid)',
 };
 
 interface PositionDotGridProps {
@@ -20,7 +20,8 @@ export function PositionDotGrid({ positions }: PositionDotGridProps) {
         {FORWARD_POSITIONS.map((pos) => (
           <div
             key={pos}
-            className={`w-2.5 h-2.5 rounded-full ${positions[pos] ? DOT_COLORS[positions[pos]!] ?? 'bg-gray-300' : 'bg-gray-300'}`}
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: PREF_TO_VAR[positions[pos] ?? ''] ?? 'var(--dot-unset)' }}
           />
         ))}
       </div>
@@ -28,7 +29,8 @@ export function PositionDotGrid({ positions }: PositionDotGridProps) {
         {DEFENSE_POSITIONS.map((pos) => (
           <div
             key={pos}
-            className={`w-2.5 h-2.5 rounded-full ${positions[pos] ? DOT_COLORS[positions[pos]!] ?? 'bg-gray-300' : 'bg-gray-300'}`}
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: PREF_TO_VAR[positions[pos] ?? ''] ?? 'var(--dot-unset)' }}
           />
         ))}
       </div>

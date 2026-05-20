@@ -36,6 +36,7 @@ export interface RosterPlayer extends Player {
   player_nickname: string | null;
   is_team_admin: boolean;
   is_active: boolean;
+  display_name: string;
 }
 
 export interface GameAbsence {

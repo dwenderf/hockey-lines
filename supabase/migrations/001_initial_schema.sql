@@ -18,17 +18,17 @@ create table players (
 
 -- Rosters (team membership + team-specific attributes)
 create table rosters (
-  id            uuid primary key default gen_random_uuid(),
-  team_id       uuid not null references teams(id) on delete cascade,
-  player_id     uuid not null references players(id) on delete cascade,
-  positions     jsonb not null default '{}',
+  id             uuid primary key default gen_random_uuid(),
+  team_id        uuid not null references teams(id) on delete cascade,
+  player_id      uuid not null references players(id) on delete cascade,
+  positions      jsonb not null default '{}',
   -- positions shape: { "LW": "preferred"|"acceptable"|"refused", ... }
   player_level    smallint check (player_level between 1 and 5),
   jersey_number   text,
   player_nickname text,
   is_team_admin   bool not null default false,
-  is_active     bool not null default true,
-  created_at    timestamptz not null default now(),
+  is_active       bool not null default true,
+  created_at      timestamptz not null default now(),
   unique (team_id, player_id)
 );
 
@@ -187,6 +187,45 @@ create policy "auth write" on leagues
 -- system_admins: NO client write policy — rows inserted via SQL editor only.
 
 -- ============================================================
+-- Display name helper + public roster view
+-- ============================================================
+
+create or replace function get_display_name(
+  p_name text, p_nickname text, p_jersey text
+) returns text language sql immutable as $$
+  select case
+    when p_nickname is not null and p_nickname <> '' then p_nickname
+    else split_part(p_name, ' ', 1) ||
+         case when length(split_part(p_name, ' ', 2)) > 0
+              then ' ' || left(split_part(p_name, ' ', 2), 1) || '.'
+              else '' end
+  end
+$$;
+
+-- Public read-only view used by both the captain view and the public game page.
+-- Exposes display_name (resolved nickname or "First L." format) and all fields
+-- needed for slot assignment and roster management. No PII — full name only
+-- appears already processed inside display_name.
+drop view if exists public_roster_view;
+create view public_roster_view as
+select
+  r.id,
+  r.team_id,
+  r.player_id,
+  r.jersey_number,
+  r.player_nickname,
+  r.positions,
+  r.player_level,
+  r.is_team_admin,
+  r.is_active,
+  p.is_goalie,
+  get_display_name(p.name, r.player_nickname, r.jersey_number) as display_name
+from rosters r
+join players p on p.id = r.player_id;
+
+grant select on public_roster_view to anon;
+
+-- ============================================================
 -- Enable Realtime on slot tables and players
 -- Run in Supabase dashboard: Database → Replication → Tables
 -- or uncomment and run:
@@ -196,51 +235,6 @@ create policy "auth write" on leagues
 -- alter publication supabase_realtime add table game_absences;
 -- alter publication supabase_realtime add table rosters;
 -- ============================================================
-
--- ============================================================
--- Display name helper + public roster view
--- ============================================================
-
--- Returns a privacy-safe display name for a roster player.
--- Priority: nickname → "First L." from full name.
-create or replace function get_display_name(
-  p_name     text,
-  p_nickname text,
-  p_jersey   text
-) returns text
-language sql
-immutable
-as $$
-  select case
-    when p_nickname is not null and p_nickname <> '' then p_nickname
-    else
-      split_part(p_name, ' ', 1) ||
-      case
-        when length(split_part(p_name, ' ', 2)) > 0
-          then ' ' || left(split_part(p_name, ' ', 2), 1) || '.'
-        else ''
-      end
-  end
-$$;
-
--- Public view: exposes only non-PII roster data for active players.
--- Excludes player_id, player_level, is_team_admin.
--- display_name is nickname or "First L." — never raw full name.
--- RLS on the underlying tables still applies (security invoker).
-create or replace view public_roster_view as
-select
-  r.id,
-  r.team_id,
-  r.jersey_number,
-  r.player_nickname,
-  r.positions,
-  r.is_active,
-  get_display_name(p.name, r.player_nickname, r.jersey_number) as display_name
-from rosters r
-join players p on p.id = r.player_id
-where r.is_active = true;
-
-grant select on public_roster_view to anon;
 
 -- ============================================================
 -- Post-migration setup (run once, substituting your values)

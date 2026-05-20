@@ -30,16 +30,45 @@ export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, rea
   }, [benchPlayers.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className={`h-full ${pinging ? 'carousel-pinging' : ''}`}>
-    <div className="flex items-center h-full px-2 gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {benchPlayers.length === 0 ? (
-        <p className="text-xs text-gray-400 px-2">All players are on the ice</p>
-      ) : (
-        benchPlayers.map((player) => (
-          <AvatarTile key={player.id} player={player} readOnly={readOnly} />
-        ))
-      )}
-    </div>
+    <div className="flex flex-col h-full">
+      {/* Zone label */}
+      <p
+        className="shrink-0 px-2 pt-1"
+        style={{
+          fontSize: 10,
+          letterSpacing: '0.07em',
+          textTransform: 'uppercase',
+          color: 'var(--text-secondary)',
+        }}
+      >
+        Bench
+      </p>
+
+      {/* Scrollable tile row with fade mask */}
+      <div
+        className={`flex-1 overflow-hidden ${pinging ? 'carousel-pinging' : ''}`}
+        style={{
+          maskImage: benchPlayers.length > 0
+            ? 'linear-gradient(to right, black 85%, transparent 100%)'
+            : undefined,
+          WebkitMaskImage: benchPlayers.length > 0
+            ? 'linear-gradient(to right, black 85%, transparent 100%)'
+            : undefined,
+        }}
+      >
+        <div className="flex items-center h-full px-2 gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {benchPlayers.length === 0 ? (
+            <div className="flex items-center gap-1.5 px-2 w-full justify-center" style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+              <span>✓</span>
+              <span>All players are on the ice</span>
+            </div>
+          ) : (
+            benchPlayers.map((player) => (
+              <AvatarTile key={player.id} player={player} readOnly={readOnly} />
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
