@@ -234,6 +234,7 @@ grant select on public_roster_view to anon;
 -- alter publication supabase_realtime add table players;
 -- alter publication supabase_realtime add table game_absences;
 -- alter publication supabase_realtime add table rosters;
+-- alter publication supabase_realtime add table games;
 -- ============================================================
 
 -- ============================================================
