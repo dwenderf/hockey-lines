@@ -113,7 +113,7 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
         {first}
         {second && <><br />{second}</>}
       </p>
-      <div className={`transition-opacity duration-200 ${!!selectedPlayerId || !!activeDragPlayerId ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="transition-opacity duration-200 opacity-100">
         <PositionDotGrid positions={player.positions} />
       </div>
     </div>
