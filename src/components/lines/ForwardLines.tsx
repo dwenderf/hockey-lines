@@ -9,11 +9,10 @@ interface ForwardLinesProps {
   onRemoveFromSlot?: (slotRef: SlotRef) => void;
   onAddLine?: () => void;
   onTapSlot?: (slotRef: SlotRef) => void;
-  onEditPlayer?: (player: RosterPlayer) => void;
   showDots?: boolean;
 }
 
-export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, onEditPlayer, showDots }: ForwardLinesProps) {
+export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, onAddLine, onTapSlot, showDots }: ForwardLinesProps) {
   return (
     <div>
       <div className="grid grid-cols-3 gap-2 mb-2">
@@ -31,7 +30,6 @@ export function ForwardLines({ slots, playersById, readOnly, onRemoveFromSlot, o
             readOnly={readOnly}
             onRemoveFromSlot={onRemoveFromSlot}
             onTapSlot={onTapSlot}
-            onEditPlayer={onEditPlayer}
             showDots={showDots}
             slots={FORWARD_POSITIONS.map((pos) => ({
               position: pos,

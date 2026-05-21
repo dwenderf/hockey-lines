@@ -13,7 +13,6 @@ interface LinesBoardProps {
   onAddForwardLine?: () => void;
   onAddDefenseLine?: () => void;
   onTapSlot?: (slotRef: SlotRef) => void;
-  onEditPlayer?: (player: RosterPlayer) => void;
   onReturnFromScratch?: (playerId: string) => void;
   onTapScratch?: () => void;
   showDots?: boolean;
@@ -29,7 +28,6 @@ export function LinesBoard({
   onAddForwardLine,
   onAddDefenseLine,
   onTapSlot,
-  onEditPlayer,
   onReturnFromScratch,
   onTapScratch,
   showDots,
@@ -46,7 +44,6 @@ export function LinesBoard({
           onRemoveFromSlot={onRemoveFromSlot}
           onAddLine={onAddForwardLine}
           onTapSlot={onTapSlot}
-          onEditPlayer={onEditPlayer}
           showDots={showDots}
         />
       </div>
@@ -58,7 +55,6 @@ export function LinesBoard({
           onRemoveFromSlot={onRemoveFromSlot}
           onAddLine={onAddDefenseLine}
           onTapSlot={onTapSlot}
-          onEditPlayer={onEditPlayer}
           showDots={showDots}
         />
       </div>

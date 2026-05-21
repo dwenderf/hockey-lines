@@ -57,7 +57,7 @@ export default function ManagePage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showDots, setShowDots] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
-  const isTouchDevice = useIsTouchDevice();
+const isTouchDevice = useIsTouchDevice();
 
   const selectedGame = games.find((g) => g.id === selectedGameId) ?? null;
 
@@ -549,7 +549,6 @@ export default function ManagePage() {
                   onTapSlot={handleTapToPlace}
                   onReturnFromScratch={markAvailable}
                   onTapScratch={handleTapToScratch}
-                  onEditPlayer={setEditingPlayer}
                   showDots={showDots}
                 />
               ) : (
@@ -569,6 +568,7 @@ export default function ManagePage() {
                 players={players}
                 assignedPlayerIds={assignedPlayerIds}
                 absentPlayerIds={absentPlayerIds}
+                onEditPlayer={setEditingPlayer}
               />
             </div>
           </div>
@@ -602,7 +602,6 @@ export default function ManagePage() {
         );
       })()}
 
-      {/* Player edit modal */}
       {editingPlayer && (
         <PlayerEditModal
           playerId={editingPlayer.id}

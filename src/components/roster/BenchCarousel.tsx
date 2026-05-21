@@ -9,9 +9,10 @@ interface BenchCarouselProps {
   assignedPlayerIds: Set<string>;
   absentPlayerIds: Set<string>;
   readOnly?: boolean;
+  onEditPlayer?: (player: RosterPlayer) => void;
 }
 
-export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, readOnly }: BenchCarouselProps) {
+export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, readOnly, onEditPlayer }: BenchCarouselProps) {
   const benchPlayers = players.filter(
     (p) => p.is_active && !p.is_goalie && !absentPlayerIds.has(p.id) && !assignedPlayerIds.has(p.id)
   );
@@ -56,7 +57,7 @@ export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, rea
             : undefined,
         }}
       >
-        <div className="flex items-center h-full px-2 gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex items-center h-full px-2 pt-3 gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {benchPlayers.length === 0 ? (
             <div className="flex items-center gap-1.5 px-2 w-full justify-center" style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
               <span>✓</span>
@@ -64,7 +65,7 @@ export function BenchCarousel({ players, assignedPlayerIds, absentPlayerIds, rea
             </div>
           ) : (
             benchPlayers.map((player) => (
-              <AvatarTile key={player.id} player={player} readOnly={readOnly} />
+              <AvatarTile key={player.id} player={player} readOnly={readOnly} onEdit={onEditPlayer ? () => onEditPlayer(player) : undefined} />
             ))
           )}
         </div>
