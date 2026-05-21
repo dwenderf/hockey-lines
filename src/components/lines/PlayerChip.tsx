@@ -44,26 +44,11 @@ function playerLabel(player: RosterPlayer): { first: string; second: string } {
   return { first, second };
 }
 
-function PrefTopBar({ pref }: { pref: Preference }) {
-  const colorVar = pref === 'preferred' ? 'var(--dot-preferred)'
-    : pref === 'acceptable' ? 'var(--dot-acceptable)'
-    : pref === 'refused'    ? 'var(--dot-avoid)'
-    : 'var(--dot-unset)';
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 3,
-        borderRadius: '6px 6px 0 0',
-        backgroundColor: colorVar,
-        transition: 'height 150ms ease',
-      }}
-    />
-  );
+function prefBorderTopColor(pref: Preference | undefined): string {
+  if (pref === 'preferred')  return 'var(--dot-preferred)';
+  if (pref === 'acceptable') return 'var(--dot-acceptable)';
+  if (pref === 'refused')    return 'var(--dot-avoid)';
+  return 'var(--border)';
 }
 
 function RemoveBadge({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
@@ -126,11 +111,12 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
       setSelectedPlayerId(isSelected ? null : player.id);
     }
 
+    const topColor = !inactive ? prefBorderTopColor(slotPref) : 'var(--border)';
     const chipStyle: React.CSSProperties = inactive
-      ? { opacity: 0.6, borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
+      ? { opacity: 0.6, borderColor: 'var(--border)', borderTopColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
       : isSelected
-      ? { borderColor: selectedBorderColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)', borderStyle: 'solid' }
-      : { borderColor: defaultBorderColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
+      ? { borderColor: selectedBorderColor, borderTopColor: topColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)', borderStyle: 'solid' }
+      : { borderColor: defaultBorderColor, borderTopColor: topColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
           opacity: dimmed ? 0.5 : 1 };
 
     return (
@@ -141,8 +127,6 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
         }`}
         style={{ height: `${MOBILE_TILE_HEIGHT}px`, ...chipStyle }}
       >
-        {/* Preference top bar — only when preference is set */}
-        {!inactive && slotPref && slotPref !== 'unset' && <PrefTopBar pref={slotPref} />}
 
         {/* Yellow × badge — remove from slot */}
         {showRemove && (
@@ -168,11 +152,12 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
   // ── Desktop / overlay chip ────────────────────────────────────────────
   const showDesktopDots = !isOverlay && !player.is_goalie && (!!showDots || (!readOnly && !!activeDragPlayerId));
 
+  const desktopTopColor = (!isOverlay && !inactive) ? prefBorderTopColor(slotPref) : 'var(--border)';
   const desktopChipStyle: React.CSSProperties = inactive
-    ? { opacity: 0.6, borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
+    ? { opacity: 0.6, borderColor: 'var(--border)', borderTopColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
     : isSelected
-    ? { borderColor: selectedBorderColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)' }
-    : { borderColor: defaultBorderColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
+    ? { borderColor: selectedBorderColor, borderTopColor: desktopTopColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)' }
+    : { borderColor: defaultBorderColor, borderTopColor: desktopTopColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
         opacity: dimmed ? 0.5 : 1 };
 
   return (
@@ -186,9 +171,6 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
       }`}
       {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
-      {/* Preference top bar — only when preference is set */}
-      {!isOverlay && !inactive && isInSlot && slotPref && slotPref !== 'unset' && <PrefTopBar pref={slotPref} />}
-
       {/* Yellow × badge — remove from slot */}
       {showRemove && (
         <RemoveBadge onClick={(e) => { e.stopPropagation(); onRemove!(); }} />

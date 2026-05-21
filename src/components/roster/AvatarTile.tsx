@@ -26,8 +26,10 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
 
   const style: React.CSSProperties = {
     ...(transform ? { transform: CSS.Translate.toString(transform) } : {}),
-    width: '76px',
-    height: '76px',
+    minWidth: 76,
+    maxWidth: 106,
+    width: 'fit-content',
+    height: 76,
     flexShrink: 0,
   };
 
