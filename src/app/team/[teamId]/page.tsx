@@ -169,9 +169,10 @@ function NextGameCard({
     : formatCountdown(msRemaining);
 
   return (
-    <div
-      className="rounded-lg p-4 border"
-      style={{ backgroundColor: 'var(--next-game-bg)', borderColor: 'var(--accent)' }}
+    <Link
+      href={`/team/${teamId}/game/${game.id}`}
+      className="block rounded-lg p-4 border"
+      style={{ backgroundColor: 'var(--next-game-bg)', borderColor: 'var(--accent)', textDecoration: 'none' }}
     >
       <p
         className="text-xs uppercase font-bold tracking-wider mb-1"
@@ -189,23 +190,21 @@ function NextGameCard({
         {countdownDisplay}
       </p>
       <div className="flex items-center justify-between mt-3">
-        <Link
-          href={`/team/${teamId}/game/${game.id}`}
-          className="text-sm font-medium"
-          style={{ color: 'var(--accent)' }}
-        >
-          View lines →
-        </Link>
-        {isCaptain && (
-          <span
-            className="text-xs flex items-center gap-1"
-            style={{ color: game.is_published ? 'var(--pill-published-text)' : 'var(--text-secondary)' }}
-          >
-            {game.is_published ? '✓ Published' : '· Draft'}
-          </span>
-        )}
+        <div>
+          {isCaptain && (
+            <span
+              className="text-xs"
+              style={{ color: game.is_published ? 'var(--pill-published-text)' : 'var(--text-secondary)' }}
+            >
+              {game.is_published ? '✓ Published' : '· Draft'}
+            </span>
+          )}
+        </div>
+        <span style={{ color: 'var(--text-secondary)' }}>
+          <ChevronRightIcon />
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -281,12 +280,12 @@ export default function TeamHubPage() {
   const { isCaptain, loading: captainLoading } = useIsTeamCaptain(teamId);
 
   const [team, setTeam]               = useState<Team | null>(null);
-  const [captainTeams, setCaptainTeams] = useState<Team[]>([]);
   const [games, setGames]             = useState<Game[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
   const [now, setNow]                 = useState(Date.now());
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [showAddGame, setShowAddGame] = useState(false);
+  const [authUser, setAuthUser]       = useState<{ id: string } | null>(null);
 
   // Show the page only once both games and the captain check have resolved
   const loading = gamesLoading || captainLoading;
@@ -333,27 +332,20 @@ export default function TeamHubPage() {
     return () => { supabase.removeChannel(channel); };
   }, [teamId, fetchGames]);
 
-  // Fetch captain's full team list for the tab strip (only when confirmed captain)
-  useEffect(() => {
-    if (!isCaptain) { setCaptainTeams([]); return; }
-    const supabase = createClient();
-    const fetch = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: myTeams } = await supabase
-        .from('teams')
-        .select('id, name')
-        .eq('auth_user_id', user.id)
-        .order('name');
-      setCaptainTeams(myTeams ?? []);
-    };
-    fetch().catch(() => {});
-  }, [isCaptain]);
-
   // Countdown — ticks every second
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Auth user — drives Log in / Log out link
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await createClient().auth.signOut();
+    window.location.reload();
   }, []);
 
   const addGame = useCallback(async (opponent: string, isHome: boolean, startsAt: string) => {
@@ -406,30 +398,45 @@ export default function TeamHubPage() {
 
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg-page)' }}>
-      {/* Captain tab strip — one tab per team the captain manages */}
-      {isCaptain && captainTeams.length > 0 && (
-        <div
-          className="border-b flex overflow-x-auto [&::-webkit-scrollbar]:hidden"
-          style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-        >
-          {captainTeams.map((t) => (
-            <Link
-              key={t.id}
-              href={`/team/${t.id}`}
-              className="font-display shrink-0 truncate px-3 py-2 text-sm font-bold transition-colors"
-              style={{
-                maxWidth: 120,
-                textDecoration: 'none',
-                ...(t.id === teamId
-                  ? { backgroundColor: 'var(--tab-active-bg)', color: 'var(--tab-active-text)' }
-                  : { color: 'var(--tab-inactive-text)' }),
-              }}
-            >
-              {t.name}
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* Team header — team name + Log in / Log out */}
+      <div
+        className="flex items-center justify-between border-b"
+        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', minHeight: 44 }}
+      >
+        {isCaptain ? (
+          <Link
+            href="/manage"
+            className="flex items-center gap-1 px-3 py-2 font-display text-sm font-bold flex-1"
+            style={{ color: 'var(--text-primary)', textDecoration: 'none' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M10 4L6 8L10 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {team?.name ?? ''}
+          </Link>
+        ) : (
+          <span className="px-3 py-2 font-display text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+            {team?.name ?? ''}
+          </span>
+        )}
+        {authUser ? (
+          <button
+            onClick={handleLogout}
+            className="px-3 py-2 text-sm shrink-0"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Log out
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            className="px-3 py-2 text-sm shrink-0"
+            style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+          >
+            Log in
+          </Link>
+        )}
+      </div>
 
       <main className="flex-1 p-4 w-full max-w-2xl mx-auto">
         {zeroGames ? (

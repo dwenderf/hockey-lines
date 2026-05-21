@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -26,7 +26,6 @@ import { RosterPanel } from '@/components/roster/RosterPanel';
 import { BenchCarousel } from '@/components/roster/BenchCarousel';
 import { BackToTeam } from '@/components/BackToTeam';
 import { formatOpponent } from '@/lib/formatOpponent';
-import { Button } from '@/components/ui/Button';
 import { PlayerChip } from '@/components/lines/PlayerChip';
 import type { Game, SlotRef, DraggableData, DroppableData, RosterPlayer } from '@/lib/types';
 
@@ -66,12 +65,12 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
 
   const [activeDragPlayerId, setActiveDragPlayerId] = useState<string | null>(null);
   const [collision, setCollision]                   = useState<CollisionState | null>(null);
-  const [copied, setCopied]                         = useState(false);
   const [isEditMode, setIsEditMode]                 = useState(false);
   const [selectedPlayerId, setSelectedPlayerId]     = useState<string | null>(null);
-  const [showMobileMenu, setShowMobileMenu]         = useState(false);
   const [showDots, setShowDots]                     = useState(false);
+  const [showDotMenu, setShowDotMenu]               = useState(false);
   const [editingPlayer, setEditingPlayer]           = useState<RosterPlayer | null>(null);
+  const dotMenuRef = useRef<HTMLDivElement>(null);
 
   const isTouchDevice = useIsTouchDevice();
 
@@ -138,13 +137,6 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
     setGame((g) => ({ ...g, is_published: false }));
   }, [gameId]);
 
-  // ── Copy public link ───────────────────────────────────────────────────
-  const copyGameLink = useCallback(() => {
-    navigator.clipboard.writeText(`${window.location.origin}/team/${teamId}/game/${gameId}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [teamId, gameId]);
-
   // ── Logout ─────────────────────────────────────────────────────────────
   const handleLogout = useCallback(async () => {
     const supabase = createClient();
@@ -152,8 +144,19 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
       supabase.auth.signOut(),
       new Promise((resolve) => setTimeout(resolve, 5000)),
     ]);
-    window.location.href = '/login';
-  }, []);
+    window.location.href = `/team/${teamId}`;
+  }, [teamId]);
+
+  useEffect(() => {
+    if (!showDotMenu) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (dotMenuRef.current && !dotMenuRef.current.contains(e.target as Node)) {
+        setShowDotMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDotMenu]);
 
   // ── Edit mode helpers ──────────────────────────────────────────────────
   function exitEditMode() {
@@ -345,38 +348,59 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
             className="border-b shadow-sm relative"
             style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
           >
-            {/* Row 1: BackToTeam + desktop controls / mobile ⋯ */}
+            {/* Row 1: BackToTeam + action controls */}
             <div className="flex items-center justify-between px-4 pt-2 pb-0">
               <BackToTeam teamId={teamId} teamName={teamName} />
-              <div className="flex items-center gap-2 shrink-0 ml-2">
-                {/* Desktop controls */}
-                <div className="mobile-hide flex items-center gap-2">
-                  {game.is_published ? (
-                    <>
-                      <Button variant="secondary" onClick={copyGameLink}>
-                        {copied ? 'Copied!' : 'Copy link'}
-                      </Button>
-                      <Button variant="ghost" onClick={unpublishGame}>
-                        Unpublish
-                      </Button>
-                    </>
-                  ) : (
-                    <Button variant="primary" onClick={publishGame}>
-                      Publish lines
-                    </Button>
-                  )}
-                  <Button variant="ghost" onClick={handleLogout}>
-                    Logout
-                  </Button>
-                </div>
-                {/* Mobile ⋯ menu */}
-                <button
-                  onClick={() => setShowMobileMenu((v) => !v)}
-                  className="mobile-show hidden p-2 rounded-md text-lg leading-none"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  ⋯
-                </button>
+              <div className="flex items-center gap-3 shrink-0 ml-2">
+                {game.is_published ? (
+                  <div className="relative" ref={dotMenuRef}>
+                    <button
+                      onClick={() => setShowDotMenu((v) => !v)}
+                      className="px-2 py-1 rounded-md text-base leading-none"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      ···
+                    </button>
+                    {showDotMenu && (
+                      <div
+                        className="absolute right-0 top-full mt-1 z-50 w-40 rounded-lg border shadow-lg py-1"
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
+                      >
+                        <button
+                          onClick={() => { unpublishGame(); setShowDotMenu(false); }}
+                          className="w-full text-left px-4 py-2 text-sm"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          Unpublish
+                        </button>
+                        <button
+                          onClick={() => { handleLogout(); setShowDotMenu(false); }}
+                          className="w-full text-left px-4 py-2 text-sm"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={publishGame}
+                      className="px-3 py-1.5 rounded-md text-sm font-medium text-white"
+                      style={{ backgroundColor: 'var(--accent)' }}
+                    >
+                      Publish
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="text-sm"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Log out
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -389,49 +413,6 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
                 {formatGameDate(game.starts_at)}
               </p>
             </div>
-
-            {/* Mobile overflow menu */}
-            {showMobileMenu && (
-              <div
-                className="mobile-show hidden absolute right-3 top-12 z-50 w-48 rounded-lg border shadow-lg py-1"
-                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-              >
-                {game.is_published ? (
-                  <>
-                    <button
-                      onClick={() => { copyGameLink(); setShowMobileMenu(false); }}
-                      className="w-full text-left px-4 py-2 text-sm"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {copied ? 'Copied!' : 'Copy link'}
-                    </button>
-                    <button
-                      onClick={() => { unpublishGame(); setShowMobileMenu(false); }}
-                      className="w-full text-left px-4 py-2 text-sm"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      Unpublish
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => { publishGame(); setShowMobileMenu(false); }}
-                    className="w-full text-left px-4 py-2 text-sm font-medium"
-                    style={{ color: 'var(--accent)' }}
-                  >
-                    Publish lines
-                  </button>
-                )}
-                <hr className="my-1" style={{ borderColor: 'var(--border)' }} />
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  Logout
-                </button>
-              </div>
-            )}
           </header>
 
           {/* Sub-header — Show Preferred Positions toggle */}
