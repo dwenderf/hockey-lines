@@ -233,11 +233,11 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4"
+      className="fixed inset-0 z-50 flex flex-col sm:items-center sm:justify-center sm:bg-black/40 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md overflow-hidden shadow-2xl rounded-t-2xl sm:rounded-2xl"
+        className="flex-1 sm:flex-none flex flex-col w-full sm:max-w-md sm:rounded-2xl sm:max-h-[90vh] overflow-hidden shadow-2xl"
         style={{ backgroundColor: 'var(--surface)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -261,7 +261,7 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
 
         {/* Body */}
         {step === 'name' ? (
-          <div className="px-5 py-6 flex flex-col gap-4">
+          <div className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-4">
             <div>
               <label
                 className="block text-sm font-medium mb-1"
@@ -310,7 +310,7 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
             </div>
           </div>
         ) : (
-          <div className="px-5 py-5 flex flex-col gap-5 max-h-[80vh] overflow-y-auto">
+          <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5">
             {/* Name */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--text-secondary)' }}>
