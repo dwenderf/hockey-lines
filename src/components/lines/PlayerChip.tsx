@@ -31,18 +31,13 @@ const nameClamp: React.CSSProperties = {
 
 const MOBILE_TILE_HEIGHT = 76;
 
-function splitName(name: string): [string, string] {
-  const i = name.indexOf(' ');
-  return i === -1 ? [name, ''] : [name.slice(0, i), name.slice(i + 1)];
+function playerLabel(player: RosterPlayer): { first: string; second: string } {
+  return {
+    first:  player.jersey_number ?? '-',
+    second: player.display_name || player.name,
+  };
 }
 
-function playerLabel(player: RosterPlayer): { first: string; second: string } {
-  const displayName = player.display_name || player.name;
-  const jersey = player.jersey_number ?? ' ';
-  const full = `${jersey} ${displayName}`;
-  const [first, second] = splitName(full);
-  return { first, second };
-}
 
 function prefBorderTopColor(pref: Preference | undefined): string {
   if (pref === 'preferred')  return 'var(--dot-preferred)';

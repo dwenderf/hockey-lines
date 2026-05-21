@@ -49,7 +49,7 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
     : { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
         opacity: otherSelected ? 0.5 : 1 };
 
-  const first  = player.jersey_number ?? ' ';
+  const first  = player.jersey_number ?? '-';
   const second = player.display_name || player.name;
 
   const finalStyle: React.CSSProperties = {
