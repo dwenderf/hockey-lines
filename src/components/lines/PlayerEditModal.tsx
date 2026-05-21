@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { cyclePositions } from '@/utils/positions';
 import { FORWARD_POSITIONS, DEFENSE_POSITIONS } from '@/lib/constants';
@@ -234,7 +235,7 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
     }
   };
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-50 flex flex-col${isTouchDevice ? '' : ' items-center justify-center bg-black/40 p-4'}`}
       onClick={isTouchDevice ? undefined : onClose}
@@ -434,6 +435,7 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
