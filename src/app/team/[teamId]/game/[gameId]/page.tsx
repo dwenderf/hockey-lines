@@ -159,7 +159,7 @@ function PlayerGameView({
 
   return (
     <DragStateContext.Provider value={dragCtxValue}>
-      <div className="flex h-screen flex-col" style={{ backgroundColor: 'var(--bg-page)' }}>
+      <div className="flex h-dvh flex-col" style={{ backgroundColor: 'var(--bg-page)' }}>
         {/* Header */}
         <header
           className="border-b px-6 pt-2 pb-3 shadow-sm flex-shrink-0"
