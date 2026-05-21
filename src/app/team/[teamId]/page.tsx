@@ -540,7 +540,7 @@ export default function TeamHubPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg-page)' }}>
+    <div className="flex flex-col" style={{ backgroundColor: 'var(--bg-page)', height: '100dvh' }}>
       {/* Team header */}
       <div
         className="flex items-center justify-between border-b shrink-0"
@@ -583,7 +583,7 @@ export default function TeamHubPage() {
 
       {/* Swipeable tab content */}
       <div
-        className="flex-1 overflow-hidden"
+        className="flex-1 min-h-0 overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
