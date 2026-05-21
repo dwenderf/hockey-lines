@@ -149,5 +149,68 @@ export function usePlayers(teamId: string | null) {
     []
   );
 
-  return { players, loading, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel };
+  const updatePlayerDetails = useCallback(
+    async (
+      rosterId: string,
+      playerId: string,
+      data: {
+        name: string;
+        jersey_number: string | null;
+        player_nickname: string | null;
+        positions: Partial<Record<Position, Exclude<Preference, 'unset'>>>;
+        player_level: 1 | 2 | 3 | 4 | 5 | null;
+        is_active: boolean;
+      }
+    ) => {
+      const supabase = createClient();
+      const player = players.find((p) => p.roster_id === rosterId);
+
+      const optimistic: Partial<RosterPlayer> = {
+        name: data.name,
+        display_name: data.player_nickname?.trim() || data.name,
+        jersey_number: data.jersey_number,
+        player_nickname: data.player_nickname,
+        positions: data.positions,
+        player_level: data.player_level,
+        is_active: data.is_active,
+      };
+
+      setPlayers((prev) =>
+        prev.map((p) => (p.roster_id === rosterId ? { ...p, ...optimistic } : p))
+      );
+
+      try {
+        const { error: rosterError } = await supabase
+          .from('rosters')
+          .update({
+            jersey_number: data.jersey_number,
+            player_nickname: data.player_nickname,
+            positions: data.positions,
+            player_level: data.player_level,
+            is_active: data.is_active,
+          })
+          .eq('id', rosterId);
+        if (rosterError) throw rosterError;
+
+        if (player && data.name !== player.name) {
+          const { error: playerError } = await supabase
+            .from('players')
+            .update({ name: data.name })
+            .eq('id', playerId);
+          if (playerError) throw playerError;
+        }
+      } catch (err) {
+        // Revert optimistic update
+        if (player) {
+          setPlayers((prev) =>
+            prev.map((p) => (p.roster_id === rosterId ? player : p))
+          );
+        }
+        throw err;
+      }
+    },
+    [players]
+  );
+
+  return { players, loading, addPlayer, addExistingPlayer, deactivatePlayer, reactivatePlayer, updatePreference, updateLevel, updatePlayerDetails, refreshPlayers: fetch };
 }

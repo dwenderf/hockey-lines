@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { useDragState } from '@/hooks/useDragState';
 
 import { RosterPlayer as RosterPlayerComponent } from './RosterPlayer';
-import { PreferenceEditor } from '@/components/preferences/PreferenceEditor';
 import type { RosterPlayer, Position, Preference } from '@/lib/types';
 
 interface RosterPanelProps {
@@ -14,6 +12,7 @@ interface RosterPanelProps {
   absentPlayerIds?: Set<string>;
   readOnly?: boolean;
   onUpdatePreference?: (rosterId: string, pos: Position, pref: Exclude<Preference, 'unset'> | null) => void;
+  onEditPlayer?: (player: RosterPlayer) => void;
 }
 
 export function RosterPanel({
@@ -22,8 +21,8 @@ export function RosterPanel({
   absentPlayerIds,
   readOnly,
   onUpdatePreference,
+  onEditPlayer,
 }: RosterPanelProps) {
-  const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
 
   const { activeDragPlayerId } = useDragState();
   const activeDragPlayer = activeDragPlayerId ? players.find((p) => p.id === activeDragPlayerId) : null;
@@ -88,7 +87,7 @@ export function RosterPanel({
                 player={p}
                 isAssigned={assignedPlayerIds.has(p.id)}
                 readOnly={readOnly}
-                onEdit={onUpdatePreference ? () => setEditingPlayer(p) : undefined}
+                onEdit={onEditPlayer ? () => onEditPlayer(p) : undefined}
               />
             ))}
             {skaters.length === 0 && (
@@ -168,26 +167,6 @@ export function RosterPanel({
         </div>
       </div>
 
-      {editingPlayer && onUpdatePreference && (
-        <PreferenceEditor
-          player={editingPlayer}
-          open={true}
-          onClose={() => setEditingPlayer(null)}
-          onUpdate={(pos, pref) => {
-            onUpdatePreference(editingPlayer.roster_id, pos, pref);
-            setEditingPlayer((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    positions: pref === null
-                      ? Object.fromEntries(Object.entries(prev.positions).filter(([k]) => k !== pos))
-                      : { ...prev.positions, [pos]: pref },
-                  }
-                : null
-            );
-          }}
-        />
-      )}
     </div>
   );
 }

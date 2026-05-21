@@ -34,6 +34,12 @@
   --next-game-bg: #FFF8F0;
   --pill-published-bg: #EAF3DE;
   --pill-published-text: #3B6D11;
+  --pos-tile-preferred-bg: #EAF3DE;
+  --pos-tile-preferred-text: #3B6D11;
+  --pos-tile-acceptable-bg: #E6F1FB;
+  --pos-tile-acceptable-text: #185FA5;
+  --pos-tile-refused-bg: #FCEBEB;
+  --pos-tile-refused-text: #A32D2D;
 }
 
 .dark {
@@ -63,6 +69,12 @@
   --next-game-bg: #0F2A45;
   --pill-published-bg: #0F3D1F;
   --pill-published-text: #4ADE80;
+  --pos-tile-preferred-bg: #0F3D1F;
+  --pos-tile-preferred-text: #4ADE80;
+  --pos-tile-acceptable-bg: #1E2A5E;
+  --pos-tile-acceptable-text: #60A5FA;
+  --pos-tile-refused-bg: #3D1010;
+  --pos-tile-refused-text: #F87171;
 }
 
 /* ── Tailwind color + font tokens ─────────────────────────────────────── */
