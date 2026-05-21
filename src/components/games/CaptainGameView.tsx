@@ -337,7 +337,7 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
         onDragEnd={handleDragEnd}
       >
         <div
-          className="flex h-screen flex-col"
+          className="flex h-dvh flex-col"
           style={{ backgroundColor: 'var(--bg-page)' }}
           onClick={(e) => {
             if (isEditMode && e.target === e.currentTarget) exitEditMode();
