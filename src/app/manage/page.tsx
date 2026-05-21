@@ -6,6 +6,25 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { Team } from '@/lib/types';
 
+function LogOutHeader() {
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+  return (
+    <div className="flex justify-end px-4 py-2">
+      <button
+        onClick={handleLogout}
+        className="text-sm"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        Log out
+      </button>
+    </div>
+  );
+}
+
 export default function ManagePage() {
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
@@ -44,10 +63,13 @@ export default function ManagePage() {
   if (loading) {
     return (
       <main
-        className="flex min-h-screen items-center justify-center"
+        className="flex min-h-screen flex-col"
         style={{ backgroundColor: 'var(--bg-page)' }}
       >
-        <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+        <LogOutHeader />
+        <div className="flex flex-1 items-center justify-center">
+          <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+        </div>
       </main>
     );
   }
@@ -56,15 +78,18 @@ export default function ManagePage() {
   if (teams.length === 0) {
     return (
       <main
-        className="flex min-h-screen flex-col items-center justify-center gap-2"
+        className="flex min-h-screen flex-col"
         style={{ backgroundColor: 'var(--bg-page)' }}
       >
-        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
-          No teams found
-        </p>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          You don&apos;t manage any teams yet.
-        </p>
+        <LogOutHeader />
+        <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+            No teams found
+          </p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            You don&apos;t manage any teams yet.
+          </p>
+        </div>
       </main>
     );
   }
@@ -75,6 +100,7 @@ export default function ManagePage() {
       className="flex flex-col min-h-screen"
       style={{ backgroundColor: 'var(--bg-page)' }}
     >
+      <LogOutHeader />
       <div className="p-6 max-w-lg mx-auto w-full">
         <h1
           className="font-display text-xl font-bold mb-4"
