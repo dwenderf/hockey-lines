@@ -107,11 +107,12 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
     }
 
     const topColor = !inactive ? prefBorderTopColor(slotPref) : 'var(--border)';
+    const sides = { borderRightColor: 'var(--border)', borderBottomColor: 'var(--border)', borderLeftColor: 'var(--border)' };
     const chipStyle: React.CSSProperties = inactive
-      ? { opacity: 0.6, borderColor: 'var(--border)', borderTopColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
+      ? { opacity: 0.6, borderTopColor: 'var(--border)', ...sides, backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
       : isSelected
-      ? { borderColor: selectedBorderColor, borderTopColor: topColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)', borderStyle: 'solid' }
-      : { borderColor: defaultBorderColor, borderTopColor: topColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
+      ? { borderTopColor: topColor, ...sides, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)' }
+      : { borderTopColor: topColor, ...sides, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
           opacity: dimmed ? 0.5 : 1 };
 
     return (
@@ -148,11 +149,12 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
   const showDesktopDots = !isOverlay && !player.is_goalie && (!!showDots || (!readOnly && !!activeDragPlayerId));
 
   const desktopTopColor = (!isOverlay && !inactive) ? prefBorderTopColor(slotPref) : 'var(--border)';
+  const desktopSides = { borderRightColor: 'var(--border)', borderBottomColor: 'var(--border)', borderLeftColor: 'var(--border)' };
   const desktopChipStyle: React.CSSProperties = inactive
-    ? { opacity: 0.6, borderColor: 'var(--border)', borderTopColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
+    ? { opacity: 0.6, borderTopColor: 'var(--border)', ...desktopSides, backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }
     : isSelected
-    ? { borderColor: selectedBorderColor, borderTopColor: desktopTopColor, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)' }
-    : { borderColor: defaultBorderColor, borderTopColor: desktopTopColor, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
+    ? { borderTopColor: desktopTopColor, ...desktopSides, backgroundColor: 'var(--selected-bg)', color: 'var(--selected-text)' }
+    : { borderTopColor: desktopTopColor, ...desktopSides, backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
         opacity: dimmed ? 0.5 : 1 };
 
   return (
