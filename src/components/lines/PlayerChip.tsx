@@ -141,8 +141,8 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
         }`}
         style={{ height: `${MOBILE_TILE_HEIGHT}px`, ...chipStyle }}
       >
-        {/* Preference top bar — always visible on filled chips */}
-        {!inactive && <PrefTopBar pref={slotPref ?? 'unset'} />}
+        {/* Preference top bar — only when preference is set */}
+        {!inactive && slotPref && slotPref !== 'unset' && <PrefTopBar pref={slotPref} />}
 
         {/* Yellow × badge — remove from slot */}
         {showRemove && (
@@ -186,8 +186,8 @@ export function PlayerChip({ player, fromSlot, readOnly, onRemove, isOverlay, sl
       }`}
       {...(!readOnly && !isOverlay && !inactive ? { ...listeners, ...attributes } : {})}
     >
-      {/* Preference top bar */}
-      {!isOverlay && !inactive && isInSlot && <PrefTopBar pref={slotPref ?? 'unset'} />}
+      {/* Preference top bar — only when preference is set */}
+      {!isOverlay && !inactive && isInSlot && slotPref && slotPref !== 'unset' && <PrefTopBar pref={slotPref} />}
 
       {/* Yellow × badge — remove from slot */}
       {showRemove && (

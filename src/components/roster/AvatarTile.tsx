@@ -47,10 +47,8 @@ export function AvatarTile({ player, readOnly, onEdit }: AvatarTileProps) {
     : { borderColor: 'var(--border)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)',
         opacity: otherSelected ? 0.5 : 1 };
 
-  const displayName = player.display_name || player.name;
-  const i = displayName.indexOf(' ');
-  const first  = i === -1 ? displayName : displayName.slice(0, i);
-  const second = i === -1 ? '' : displayName.slice(i + 1);
+  const first  = player.jersey_number ?? ' ';
+  const second = player.display_name || player.name;
 
   const finalStyle: React.CSSProperties = {
     ...style,
