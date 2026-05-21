@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { cyclePositions } from '@/utils/positions';
 import { FORWARD_POSITIONS, DEFENSE_POSITIONS } from '@/lib/constants';
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
 import type { Position, Preference, RosterPlayer } from '@/lib/types';
 
 interface PlayerEditModalProps {
@@ -114,6 +115,8 @@ function SkillChips({
 }
 
 export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEditModalProps) {
+  const isTouchDevice = useIsTouchDevice();
+
   // Step: 'name' = step 1 for add mode; 'edit' = full edit form
   const [step, setStep] = useState<'name' | 'edit'>(player ? 'edit' : 'name');
   const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(player ?? null);
@@ -233,11 +236,11 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col sm:items-center sm:justify-center sm:bg-black/40 sm:p-4"
-      onClick={onClose}
+      className={`fixed inset-0 z-50 flex flex-col${isTouchDevice ? '' : ' items-center justify-center bg-black/40 p-4'}`}
+      onClick={isTouchDevice ? undefined : onClose}
     >
       <div
-        className="flex-1 sm:flex-none flex flex-col w-full sm:max-w-md sm:rounded-2xl sm:max-h-[90vh] overflow-hidden shadow-2xl"
+        className={`flex flex-col overflow-hidden shadow-2xl${isTouchDevice ? ' flex-1 w-full' : ' w-full max-w-md rounded-2xl max-h-[90vh]'}`}
         style={{ backgroundColor: 'var(--surface)' }}
         onClick={(e) => e.stopPropagation()}
       >
