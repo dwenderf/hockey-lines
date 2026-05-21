@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState } from 'react';
 import { usePlayers } from '@/hooks/usePlayers';
 import { PlayerTile } from './PlayerTile';
 import { PlayerEditModal } from '@/components/lines/PlayerEditModal';
@@ -16,22 +15,6 @@ export function RosterTab({ teamId, isCaptain }: RosterTabProps) {
   const { players, loading, refreshPlayers } = usePlayers(teamId);
   const [editingPlayer, setEditingPlayer] = useState<RosterPlayer | null>(null);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
-  const supabaseRef = useRef(createClient());
-
-  // Realtime subscription on rosters for this team
-  useEffect(() => {
-    const supabase = supabaseRef.current;
-    const channel = supabase
-      .channel(`rosters:${teamId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'rosters', filter: `team_id=eq.${teamId}` },
-        () => { refreshPlayers(); }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [teamId, refreshPlayers]);
 
   const activePlayers = players.filter((p) => p.is_active && !p.is_goalie);
   const inactivePlayers = players.filter((p) => !p.is_active);

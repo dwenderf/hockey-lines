@@ -41,8 +41,21 @@ export function usePlayers(teamId: string | null) {
   }, [teamId]);
 
   useEffect(() => {
+    if (!teamId) return;
     fetch();
-  }, [fetch]);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`usePlayers:${teamId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rosters', filter: `team_id=eq.${teamId}` },
+        () => { fetch(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [teamId, fetch]);
 
   const addPlayer = useCallback(
     async (name: string, isGoalie: boolean) => {
