@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useIsTeamCaptain } from '@/hooks/useIsTeamCaptain';
 import { AddGameForm } from '@/components/games/AddGameForm';
+import { RosterTab } from '@/components/roster/RosterTab';
 import { formatOpponent } from '@/lib/formatOpponent';
 import type { Game, Team } from '@/lib/types';
 
@@ -43,7 +44,7 @@ function classifyGame(game: Game, now: number): 'upcoming' | 'in-progress' | 'pa
   return 'past';
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────
+// ── Icons ──────────────────────────────────────────────────────────────────
 
 function CalendarIcon() {
   return (
@@ -71,6 +72,29 @@ function ChevronRightIcon() {
     </svg>
   );
 }
+
+function GamesTabIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M3 9H21" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M8 2V6M16 2V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function RosterTabIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M3 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="17" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M13.5 20c0-2.485 1.567-4.5 3.5-4.5s3.5 2.015 3.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+// ── Game sub-components ────────────────────────────────────────────────────
 
 function StatusPill({ isPublished }: { isPublished: boolean }) {
   if (isPublished) {
@@ -271,12 +295,139 @@ function EmptyListState({
   );
 }
 
+// ── Games tab content ──────────────────────────────────────────────────────
+
+function GamesContent({
+  teamId,
+  isCaptain,
+  games,
+  now,
+  activeFilter,
+  setActiveFilter,
+  onAddGame,
+}: {
+  teamId: string;
+  isCaptain: boolean;
+  games: Game[];
+  now: number;
+  activeFilter: 'upcoming' | 'past';
+  setActiveFilter: (f: 'upcoming' | 'past') => void;
+  onAddGame: () => void;
+}) {
+  const upcomingGames = games.filter((g) => {
+    const cls = classifyGame(g, now);
+    return cls === 'upcoming' || cls === 'in-progress';
+  });
+
+  const pastGames = games
+    .filter((g) => classifyGame(g, now) === 'past')
+    .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+
+  const nextGame = upcomingGames[0] ?? null;
+  const listGames = activeFilter === 'upcoming' ? upcomingGames.slice(1) : pastGames;
+  const zeroGames = games.length === 0;
+
+  return (
+    <div className="p-4 w-full max-w-2xl mx-auto">
+      {zeroGames ? (
+        <ZeroGamesState isCaptain={isCaptain} onAddGame={onAddGame} />
+      ) : (
+        <>
+          <NextGameCard
+            game={nextGame}
+            teamId={teamId}
+            isCaptain={isCaptain}
+            now={now}
+            onAddGame={onAddGame}
+          />
+
+          <div className="flex gap-2 mt-4 mb-3">
+            {(['upcoming', 'past'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className="px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-colors"
+                style={
+                  activeFilter === filter
+                    ? { backgroundColor: 'var(--accent)', color: '#FFFFFF' }
+                    : { border: '1px solid var(--border)', color: 'var(--text-secondary)' }
+                }
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+
+          {listGames.length === 0 ? (
+            <EmptyListState filter={activeFilter} isCaptain={isCaptain} />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {listGames.map((game) => (
+                <GameCard key={game.id} game={game} teamId={teamId} isCaptain={isCaptain} />
+              ))}
+            </div>
+          )}
+
+          {isCaptain && (
+            <button
+              onClick={onAddGame}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium"
+              style={{
+                border: '2px dashed var(--border)',
+                color: 'var(--text-secondary)',
+                backgroundColor: 'transparent',
+              }}
+            >
+              + Add game
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Tab bar ────────────────────────────────────────────────────────────────
+
+function TabBar({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: 'games' | 'roster';
+  onTabChange: (tab: 'games' | 'roster') => void;
+}) {
+  return (
+    <div
+      className="flex border-t"
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
+      {(['games', 'roster'] as const).map((tab) => {
+        const isActive = activeTab === tab;
+        return (
+          <button
+            key={tab}
+            onClick={() => onTabChange(tab)}
+            className="flex-1 flex flex-col items-center gap-1 py-2 text-xs font-medium capitalize transition-colors"
+            style={{ color: isActive ? 'var(--accent)' : 'var(--text-secondary)' }}
+          >
+            {tab === 'games' ? <GamesTabIcon /> : <RosterTabIcon />}
+            {tab === 'games' ? 'Games' : 'Roster'}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function TeamHubPage() {
   const { teamId } = useParams<{ teamId: string }>();
 
-  // Captain status — single source of truth via shared hook
   const { isCaptain, loading: captainLoading } = useIsTeamCaptain(teamId);
 
   const [team, setTeam]               = useState<Team | null>(null);
@@ -286,8 +437,9 @@ export default function TeamHubPage() {
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [showAddGame, setShowAddGame] = useState(false);
   const [authUser, setAuthUser]       = useState<{ id: string } | null>(null);
+  const [activeTab, setActiveTab]     = useState<'games' | 'roster'>('games');
 
-  // Show the page only once both games and the captain check have resolved
+  const touchStartXRef = useRef<number | null>(null);
   const loading = gamesLoading || captainLoading;
 
   const supabaseRef = useRef(createClient());
@@ -301,7 +453,6 @@ export default function TeamHubPage() {
     if (data) setGames(data);
   }, [teamId]);
 
-  // Fetch team name + games; set up Realtime subscription
   useEffect(() => {
     const supabase = supabaseRef.current;
 
@@ -332,13 +483,11 @@ export default function TeamHubPage() {
     return () => { supabase.removeChannel(channel); };
   }, [teamId, fetchGames]);
 
-  // Countdown — ticks every second
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Auth user — drives Log in / Log out link
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
   }, []);
@@ -366,25 +515,21 @@ export default function TeamHubPage() {
         { game_id: game.id, line_number: 2 },
         { game_id: game.id, line_number: 3 },
       ]);
-      // Realtime subscription picks up the INSERT and calls fetchGames
     }
   }, [teamId]);
 
-  // ── Derived game lists ─────────────────────────────────────────────────
-  const upcomingGames = games.filter((g) => {
-    const cls = classifyGame(g, now);
-    return cls === 'upcoming' || cls === 'in-progress';
-  });
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  }, []);
 
-  const pastGames = games
-    .filter((g) => classifyGame(g, now) === 'past')
-    .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
-
-  // First upcoming/in-progress game goes in the next game card
-  const nextGame = upcomingGames[0] ?? null;
-
-  // List below pills: upcoming excludes the next game card entry
-  const listGames = activeFilter === 'upcoming' ? upcomingGames.slice(1) : pastGames;
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const delta = touchStartXRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(delta) > 50) {
+      setActiveTab(delta > 0 ? 'roster' : 'games');
+    }
+    touchStartXRef.current = null;
+  }, []);
 
   if (loading) {
     return (
@@ -394,13 +539,11 @@ export default function TeamHubPage() {
     );
   }
 
-  const zeroGames = games.length === 0;
-
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg-page)' }}>
-      {/* Team header — team name + Log in / Log out */}
+    <div className="flex flex-col" style={{ backgroundColor: 'var(--bg-page)', height: '100dvh' }}>
+      {/* Team header */}
       <div
-        className="flex items-center justify-between border-b"
+        className="flex items-center justify-between border-b shrink-0"
         style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', minHeight: 44 }}
       >
         {isCaptain ? (
@@ -438,66 +581,42 @@ export default function TeamHubPage() {
         )}
       </div>
 
-      <main className="flex-1 p-4 w-full max-w-2xl mx-auto">
-        {zeroGames ? (
-          <ZeroGamesState isCaptain={isCaptain} onAddGame={() => setShowAddGame(true)} />
-        ) : (
-          <>
-            {/* Next game card — always visible when games exist, regardless of pill filter */}
-            <NextGameCard
-              game={nextGame}
+      {/* Swipeable tab content */}
+      <div
+        className="flex-1 min-h-0 overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          className="flex h-full"
+          style={{
+            width: '200%',
+            transform: activeTab === 'games' ? 'translateX(0)' : 'translateX(-50%)',
+            transition: 'transform 200ms ease',
+          }}
+        >
+          {/* Games panel */}
+          <div className="w-1/2 h-full overflow-y-auto">
+            <GamesContent
               teamId={teamId}
               isCaptain={isCaptain}
+              games={games}
               now={now}
+              activeFilter={activeFilter}
+              setActiveFilter={setActiveFilter}
               onAddGame={() => setShowAddGame(true)}
             />
+          </div>
 
-            {/* Pill filter */}
-            <div className="flex gap-2 mt-4 mb-3">
-              {(['upcoming', 'past'] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setActiveFilter(filter)}
-                  className="px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-colors"
-                  style={
-                    activeFilter === filter
-                      ? { backgroundColor: 'var(--accent)', color: '#FFFFFF' }
-                      : { border: '1px solid var(--border)', color: 'var(--text-secondary)' }
-                  }
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
+          {/* Roster panel */}
+          <div className="w-1/2 h-full overflow-y-auto">
+            <RosterTab teamId={teamId} isCaptain={isCaptain} />
+          </div>
+        </div>
+      </div>
 
-            {/* Game list */}
-            {listGames.length === 0 ? (
-              <EmptyListState filter={activeFilter} isCaptain={isCaptain} />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {listGames.map((game) => (
-                  <GameCard key={game.id} game={game} teamId={teamId} isCaptain={isCaptain} />
-                ))}
-              </div>
-            )}
-
-            {/* Add game — captain only, dashed border below list */}
-            {isCaptain && (
-              <button
-                onClick={() => setShowAddGame(true)}
-                className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium"
-                style={{
-                  border: '2px dashed var(--border)',
-                  color: 'var(--text-secondary)',
-                  backgroundColor: 'transparent',
-                }}
-              >
-                + Add game
-              </button>
-            )}
-          </>
-        )}
-      </main>
+      {/* Bottom tab bar */}
+      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <AddGameForm
         open={showAddGame}

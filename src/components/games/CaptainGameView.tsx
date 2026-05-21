@@ -58,7 +58,7 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
   // Local game state — allows optimistic publish/unpublish updates
   const [game, setGame] = useState<Game>(initialGame);
 
-  const { players, updatePreference } = usePlayers(teamId);
+  const { players } = usePlayers(teamId);
   const { absentPlayerIds, markAbsent, markAvailable } = useGameAbsences(gameId);
   const { slots: forwardSlots, updateSlot: updateForwardSlot, addLine: addForwardLine } = useForwardSlots(gameId);
   const { slots: defenseSlots, updateSlot: updateDefenseSlot, addLine: addDefenseLine } = useDefenseSlots(gameId);
@@ -461,7 +461,7 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
                   players={players}
                   assignedPlayerIds={assignedPlayerIds}
                   absentPlayerIds={absentPlayerIds}
-                  onUpdatePreference={updatePreference}
+                  onEditPlayer={setEditingPlayer}
                 />
               </div>
             </aside>
@@ -525,9 +525,10 @@ export function CaptainGameView({ teamId, gameId, initialGame, teamName }: Capta
 
       {editingPlayer && (
         <PlayerEditModal
-          playerId={editingPlayer.id}
-          playerName={editingPlayer.display_name || editingPlayer.name}
+          player={editingPlayer}
+          teamId={teamId}
           onClose={() => setEditingPlayer(null)}
+          onSaved={() => setEditingPlayer(null)}
         />
       )}
     </DragStateContext.Provider>
