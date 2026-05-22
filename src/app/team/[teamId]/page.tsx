@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useIsTeamCaptain } from '@/hooks/useIsTeamCaptain';
-import { AddGameForm } from '@/components/games/AddGameForm';
+import { GameFormModal } from '@/components/games/GameFormModal';
 import { RosterTab } from '@/components/roster/RosterTab';
 import { formatOpponent } from '@/lib/formatOpponent';
 import type { Game, Team } from '@/lib/types';
@@ -69,6 +69,14 @@ function ChevronRightIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H3v-2L11.5 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -148,12 +156,14 @@ function NextGameCard({
   isCaptain,
   now,
   onAddGame,
+  onEdit,
 }: {
   game: Game | null;
   teamId: string;
   isCaptain: boolean;
   now: number;
   onAddGame: () => void;
+  onEdit: (game: Game) => void;
 }) {
   if (!game) {
     return (
@@ -193,42 +203,59 @@ function NextGameCard({
     : formatCountdown(msRemaining);
 
   return (
-    <Link
-      href={`/team/${teamId}/game/${game.id}`}
-      className="block rounded-lg p-4 border"
-      style={{ backgroundColor: 'var(--next-game-bg)', borderColor: 'var(--accent)', textDecoration: 'none' }}
+    <div
+      className="relative rounded-lg border"
+      style={{ backgroundColor: 'var(--next-game-bg)', borderColor: 'var(--accent)' }}
     >
-      <p
-        className="text-xs uppercase font-bold tracking-wider mb-1"
-        style={{ color: 'var(--accent)' }}
+      <Link
+        href={`/team/${teamId}/game/${game.id}`}
+        className="block p-4"
+        style={{ textDecoration: 'none', paddingRight: isCaptain ? '52px' : '16px' }}
       >
-        NEXT GAME
-      </p>
-      <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-        {formatOpponent(game.opponent, game.is_home)}
-      </h2>
-      <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-        {formatGameDate(game.starts_at)}
-      </p>
-      <p className="font-display text-xl font-bold mt-2" style={{ color: 'var(--accent)' }}>
-        {countdownDisplay}
-      </p>
-      <div className="flex items-center justify-between mt-3">
-        <div>
-          {isCaptain && (
-            <span
-              className="text-xs"
-              style={{ color: game.is_published ? 'var(--pill-published-text)' : 'var(--text-secondary)' }}
-            >
-              {game.is_published ? '✓ Published' : '· Draft'}
+        <p
+          className="text-xs uppercase font-bold tracking-wider mb-1"
+          style={{ color: 'var(--accent)' }}
+        >
+          NEXT GAME
+        </p>
+        <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          {formatOpponent(game.opponent, game.is_home)}
+        </h2>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+          {formatGameDate(game.starts_at)}
+        </p>
+        <p className="font-display text-xl font-bold mt-2" style={{ color: 'var(--accent)' }}>
+          {countdownDisplay}
+        </p>
+        <div className="flex items-center justify-between mt-3">
+          <div>
+            {isCaptain && (
+              <span
+                className="text-xs"
+                style={{ color: game.is_published ? 'var(--pill-published-text)' : 'var(--text-secondary)' }}
+              >
+                {game.is_published ? '✓ Published' : '· Draft'}
+              </span>
+            )}
+          </div>
+          {!isCaptain && (
+            <span style={{ color: 'var(--text-secondary)' }}>
+              <ChevronRightIcon />
             </span>
           )}
         </div>
-        <span style={{ color: 'var(--text-secondary)' }}>
-          <ChevronRightIcon />
-        </span>
-      </div>
-    </Link>
+      </Link>
+      {isCaptain && (
+        <button
+          onClick={() => onEdit(game)}
+          aria-label="Edit game"
+          className="absolute top-0 right-0 flex items-center justify-center"
+          style={{ width: 44, height: 44, color: 'var(--text-secondary)' }}
+        >
+          <PencilIcon />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -236,34 +263,49 @@ function GameCard({
   game,
   teamId,
   isCaptain,
+  onEdit,
 }: {
   game: Game;
   teamId: string;
   isCaptain: boolean;
+  onEdit: (game: Game) => void;
 }) {
   return (
-    <Link
-      href={`/team/${teamId}/game/${game.id}`}
-      className="block rounded-lg p-3 border"
-      style={{
-        backgroundColor: 'var(--surface)',
-        borderColor: 'var(--border)',
-        textDecoration: 'none',
-      }}
+    <div
+      className="relative rounded-lg border"
+      style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
     >
-      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-        {formatGameDate(game.starts_at)}
-      </p>
-      <p className="font-display text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-        {formatOpponent(game.opponent, game.is_home)}
-      </p>
-      <div className="flex items-center justify-between mt-2">
-        <div>{isCaptain && <StatusPill isPublished={game.is_published} />}</div>
-        <span style={{ color: 'var(--text-secondary)' }}>
-          <ChevronRightIcon />
-        </span>
-      </div>
-    </Link>
+      <Link
+        href={`/team/${teamId}/game/${game.id}`}
+        className="block p-3"
+        style={{ textDecoration: 'none', paddingRight: isCaptain ? '52px' : '12px' }}
+      >
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {formatGameDate(game.starts_at)}
+        </p>
+        <p className="font-display text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
+          {formatOpponent(game.opponent, game.is_home)}
+        </p>
+        <div className="flex items-center justify-between mt-2">
+          <div>{isCaptain && <StatusPill isPublished={game.is_published} />}</div>
+          {!isCaptain && (
+            <span style={{ color: 'var(--text-secondary)' }}>
+              <ChevronRightIcon />
+            </span>
+          )}
+        </div>
+      </Link>
+      {isCaptain && (
+        <button
+          onClick={() => onEdit(game)}
+          aria-label="Edit game"
+          className="absolute top-0 right-0 flex items-center justify-center"
+          style={{ width: 44, height: 44, color: 'var(--text-secondary)' }}
+        >
+          <PencilIcon />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -305,6 +347,7 @@ function GamesContent({
   activeFilter,
   setActiveFilter,
   onAddGame,
+  onEdit,
 }: {
   teamId: string;
   isCaptain: boolean;
@@ -313,6 +356,7 @@ function GamesContent({
   activeFilter: 'upcoming' | 'past';
   setActiveFilter: (f: 'upcoming' | 'past') => void;
   onAddGame: () => void;
+  onEdit: (game: Game) => void;
 }) {
   const upcomingGames = games.filter((g) => {
     const cls = classifyGame(g, now);
@@ -339,6 +383,7 @@ function GamesContent({
             isCaptain={isCaptain}
             now={now}
             onAddGame={onAddGame}
+            onEdit={onEdit}
           />
 
           <div className="flex gap-2 mt-4 mb-3">
@@ -363,7 +408,7 @@ function GamesContent({
           ) : (
             <div className="flex flex-col gap-2">
               {listGames.map((game) => (
-                <GameCard key={game.id} game={game} teamId={teamId} isCaptain={isCaptain} />
+                <GameCard key={game.id} game={game} teamId={teamId} isCaptain={isCaptain} onEdit={onEdit} />
               ))}
             </div>
           )}
@@ -436,6 +481,7 @@ export default function TeamHubPage() {
   const [now, setNow]                 = useState(Date.now());
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming');
   const [showAddGame, setShowAddGame] = useState(false);
+  const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [authUser, setAuthUser]       = useState<{ id: string } | null>(null);
   const [activeTab, setActiveTab]     = useState<'games' | 'roster'>('games');
 
@@ -496,27 +542,6 @@ export default function TeamHubPage() {
     await createClient().auth.signOut();
     window.location.reload();
   }, []);
-
-  const addGame = useCallback(async (opponent: string, isHome: boolean, startsAt: string) => {
-    const supabase = supabaseRef.current;
-    const { data: game } = await supabase
-      .from('games')
-      .insert({ team_id: teamId, opponent, is_home: isHome, starts_at: startsAt })
-      .select()
-      .single();
-    if (game) {
-      await supabase.from('forward_line_slots').insert([
-        { game_id: game.id, line_number: 1 },
-        { game_id: game.id, line_number: 2 },
-        { game_id: game.id, line_number: 3 },
-      ]);
-      await supabase.from('defense_line_slots').insert([
-        { game_id: game.id, line_number: 1 },
-        { game_id: game.id, line_number: 2 },
-        { game_id: game.id, line_number: 3 },
-      ]);
-    }
-  }, [teamId]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;
@@ -605,6 +630,7 @@ export default function TeamHubPage() {
               activeFilter={activeFilter}
               setActiveFilter={setActiveFilter}
               onAddGame={() => setShowAddGame(true)}
+              onEdit={(g) => setEditingGame(g)}
             />
           </div>
 
@@ -618,11 +644,14 @@ export default function TeamHubPage() {
       {/* Bottom tab bar */}
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <AddGameForm
-        open={showAddGame}
-        onClose={() => setShowAddGame(false)}
-        onAdd={addGame}
-      />
+      {(showAddGame || editingGame !== null) && (
+        <GameFormModal
+          teamId={teamId}
+          game={editingGame ?? undefined}
+          onSuccess={() => { setShowAddGame(false); setEditingGame(null); }}
+          onClose={() => { setShowAddGame(false); setEditingGame(null); }}
+        />
+      )}
     </div>
   );
 }
