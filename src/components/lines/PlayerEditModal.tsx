@@ -134,10 +134,26 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
   const [error, setError] = useState<string | null>(null);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const playerNameRef = useRef<string>(player?.name ?? '');
 
   useEffect(() => {
     if (step === 'name') nameInputRef.current?.focus();
   }, [step]);
+
+  useEffect(() => {
+    if (!editingPlayer || step !== 'edit') return;
+    createClient()
+      .from('players')
+      .select('name')
+      .eq('id', editingPlayer.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setName(data.name as string);
+          playerNameRef.current = data.name as string;
+        }
+      });
+  }, [editingPlayer?.id, step]);
 
   const handleCreatePlayer = async () => {
     if (!name.trim()) return;
@@ -145,24 +161,32 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
     setError(null);
     try {
       const supabase = createClient();
-      const { data: roster, error: rpcError } = await supabase.rpc('add_player_to_roster', {
-        p_name: name.trim(),
-        p_is_goalie: false,
-        p_team_id: teamId,
-      });
-      if (rpcError) throw rpcError;
+
+      const { data: player, error: playerError } = await supabase
+        .from('players')
+        .insert({ name: name.trim(), is_goalie: false })
+        .select()
+        .single();
+      if (playerError) throw playerError;
+
+      const { data: roster, error: rosterError } = await supabase
+        .from('rosters')
+        .insert({ team_id: teamId, player_id: player.id, positions: {} })
+        .select()
+        .single();
+      if (rosterError) throw rosterError;
 
       const { data: viewRow } = await supabase
         .from('public_roster_view')
         .select('*')
-        .eq('id', (roster as { id: string }).id)
+        .eq('id', roster.id)
         .single();
 
       if (!viewRow) throw new Error('Failed to load new player');
 
       const newPlayer: RosterPlayer = {
         id: viewRow.player_id as string,
-        name: viewRow.display_name as string,
+        name: name.trim(),
         is_goalie: viewRow.is_goalie as boolean,
         roster_id: viewRow.id as string,
         team_id: viewRow.team_id as string,
@@ -175,6 +199,7 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
         display_name: viewRow.display_name as string,
       };
 
+      playerNameRef.current = name.trim();
       setEditingPlayer(newPlayer);
       setIsActive(newPlayer.is_active);
       setSkillLevel(newPlayer.player_level);
@@ -218,7 +243,7 @@ export function PlayerEditModal({ player, teamId, onClose, onSaved }: PlayerEdit
         .eq('id', editingPlayer.roster_id);
       if (rosterError) throw rosterError;
 
-      if (name.trim() && name.trim() !== snapshot.name) {
+      if (name.trim() && name.trim() !== playerNameRef.current) {
         const { error: playerError } = await supabase
           .from('players')
           .update({ name: name.trim() })

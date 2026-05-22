@@ -55,6 +55,7 @@ export function AddGameForm({ open, onClose, onAdd }: AddGameFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
           <input
             type="datetime-local"
+            step="300"
             value={startsAt}
             onChange={(e) => setStartsAt(e.target.value)}
             className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
