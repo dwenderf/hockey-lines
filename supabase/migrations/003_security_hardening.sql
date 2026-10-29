@@ -3,13 +3,12 @@
 --   1. is_team_owner: pin search_path (SECURITY DEFINER function without one)
 --   2. public_roster_view: run with the caller's privileges (security_invoker)
 --   3. rls_auto_enable / ensure_rls: bring the Supabase-provisioned drift under version control
+--   4. players and leagues: replace the "any signed-in user can write" ALL policy with owner-only
+--      INSERT / UPDATE / DELETE policies (reads unchanged)
 -- =============================================================
 -- Idempotent: create or replace, alter view ... set, and guarded creates are safe to re-run.
 -- Never edit this file once applied; add a new migration instead.
 --
--- Deliberately NOT changed here: the "auth write" ALL policies on players and leagues
--- (any signed-in user can insert, update and delete every player and league). That is a product
--- decision for David; see the PR description.
 
 
 -- -------------------------------------------------------------
@@ -112,3 +111,85 @@ begin
   end if;
 end
 $$;
+
+
+-- -------------------------------------------------------------
+-- 4. players and leagues: owner-only writes
+-- -------------------------------------------------------------
+-- 001 let any signed-in user insert, update and delete every player and league ("auth write", FOR
+-- ALL using auth.role() = 'authenticated'). Writes are now limited to team owners. Reads do not
+-- change: the "public read" policies (for select using (true)) are untouched, and they were the only
+-- thing that granted SELECT to anon; the dropped ALL policy added nothing to them for SELECT.
+--
+-- Who counts as an owner:
+--   * a team owner = a user who is teams.auth_user_id for some team (is_team_owner(team_id)).
+--   * players are shared across teams, so a player's row is editable by the owner of any team that
+--     has the player on its roster. A player on no roster yet (the app inserts the player, then the
+--     roster row) is writable by any team owner, which is exactly what the "add player" flow needs.
+--   * DELETE is stricter, because deleting a player cascades to every roster row (and absences) of
+--     that player on any team, and cascades bypass RLS: you can delete a player only if you own
+--     every team they are on.
+--   * leagues have no owner column yet (no league_id on teams), so any team owner may write them.
+--     The app does not read or write leagues at all today.
+-- The policies are for the authenticated role only; anon has no write path (it had none before:
+-- auth.role() was never 'authenticated' for anon).
+drop policy if exists "auth write" on public.players;
+drop policy if exists "auth write" on public.leagues;
+
+drop policy if exists "owner insert" on public.players;
+create policy "owner insert" on public.players
+  for insert to authenticated
+  with check (
+    exists (select 1 from public.teams t where t.auth_user_id = auth.uid())
+  );
+
+drop policy if exists "owner update" on public.players;
+create policy "owner update" on public.players
+  for update to authenticated
+  using (
+    exists (
+      select 1 from public.rosters r
+      where r.player_id = players.id and public.is_team_owner(r.team_id)
+    )
+    or (
+      not exists (select 1 from public.rosters r where r.player_id = players.id)
+      and exists (select 1 from public.teams t where t.auth_user_id = auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.rosters r
+      where r.player_id = players.id and public.is_team_owner(r.team_id)
+    )
+    or (
+      not exists (select 1 from public.rosters r where r.player_id = players.id)
+      and exists (select 1 from public.teams t where t.auth_user_id = auth.uid())
+    )
+  );
+
+drop policy if exists "owner delete" on public.players;
+create policy "owner delete" on public.players
+  for delete to authenticated
+  using (
+    exists (select 1 from public.teams t where t.auth_user_id = auth.uid())
+    and not exists (
+      select 1 from public.rosters r
+      where r.player_id = players.id and not public.is_team_owner(r.team_id)
+    )
+  );
+
+drop policy if exists "owner insert" on public.leagues;
+create policy "owner insert" on public.leagues
+  for insert to authenticated
+  with check (exists (select 1 from public.teams t where t.auth_user_id = auth.uid()));
+
+drop policy if exists "owner update" on public.leagues;
+create policy "owner update" on public.leagues
+  for update to authenticated
+  using (exists (select 1 from public.teams t where t.auth_user_id = auth.uid()))
+  with check (exists (select 1 from public.teams t where t.auth_user_id = auth.uid()));
+
+drop policy if exists "owner delete" on public.leagues;
+create policy "owner delete" on public.leagues
+  for delete to authenticated
+  using (exists (select 1 from public.teams t where t.auth_user_id = auth.uid()));

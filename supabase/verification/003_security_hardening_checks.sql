@@ -38,3 +38,25 @@ begin;
 set local role anon;
 select 'anon can query public_roster_view' as check, count(*) >= 0 as ok from public.public_roster_view;
 rollback;
+
+-- players and leagues: the open "auth write" ALL policy is gone, the owner-only ones exist, reads untouched.
+select 'no "auth write" policy left on players or leagues' as check,
+       count(*) = 0 as ok
+from pg_policies
+where schemaname = 'public' and tablename in ('players', 'leagues') and policyname = 'auth write';
+
+select 'players and leagues have owner insert/update/delete policies for authenticated only' as check,
+       count(*) = 6 as ok
+from pg_policies
+where schemaname = 'public' and tablename in ('players', 'leagues')
+  and policyname in ('owner insert', 'owner update', 'owner delete')
+  and roles = '{authenticated}';
+
+select 'players and leagues still have the public read policy (select using true)' as check,
+       count(*) = 2 as ok
+from pg_policies
+where schemaname = 'public' and tablename in ('players', 'leagues')
+  and policyname = 'public read' and cmd = 'SELECT' and qual = 'true';
+
+-- For the behavioural checks (owner can edit/delete, non-owner cannot) run
+-- supabase/verification/003_players_leagues_owner_writes.sql; it rolls back and changes nothing.
