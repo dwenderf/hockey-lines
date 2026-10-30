@@ -126,9 +126,16 @@ $$;
 --   * players are shared across teams, so a player's row is editable by the owner of any team that
 --     has the player on its roster. A player on no roster yet (the app inserts the player, then the
 --     roster row) is writable by any team owner, which is exactly what the "add player" flow needs.
---   * DELETE is stricter, because deleting a player cascades to every roster row (and absences) of
---     that player on any team, and cascades bypass RLS: you can delete a player only if you own
---     every team they are on.
+--   * DELETE is stricter, because deleting a player touches other tables through foreign keys, and
+--     those referential actions bypass RLS. Every FK that references players(id) is covered:
+--       rosters.player_id                              ON DELETE CASCADE
+--       game_absences.player_id                        ON DELETE CASCADE
+--       forward_line_slots.lw_/c_/rw_player_id         ON DELETE SET NULL
+--       defense_line_slots.ld_/rd_player_id            ON DELETE SET NULL
+--     (SET NULL erases the player from a lineup just as a cascade would erase a row.) You can delete
+--     a player only if no such row belongs to a team you do not own: a roster row of another team,
+--     or an absence / lineup slot in another team's game, including past games of a team the player
+--     has since left.
 --   * leagues have no owner column yet (no league_id on teams), so any team owner may write them.
 --     The app does not read or write leagues at all today.
 -- The policies are for the authenticated role only; anon has no write path (it had none before:
@@ -172,9 +179,31 @@ create policy "owner delete" on public.players
   for delete to authenticated
   using (
     exists (select 1 from public.teams t where t.auth_user_id = auth.uid())
+    -- rosters.player_id (ON DELETE CASCADE): no roster row of a team the caller does not own
     and not exists (
       select 1 from public.rosters r
       where r.player_id = players.id and not public.is_team_owner(r.team_id)
+    )
+    -- game_absences.player_id (ON DELETE CASCADE): no absence in a game of a team the caller does not own
+    and not exists (
+      select 1 from public.game_absences a
+      join public.games g on g.id = a.game_id
+      where a.player_id = players.id and not public.is_team_owner(g.team_id)
+    )
+    -- forward_line_slots.{lw,c,rw}_player_id (ON DELETE SET NULL): no slot in a game of a team the
+    -- caller does not own
+    and not exists (
+      select 1 from public.forward_line_slots f
+      join public.games g on g.id = f.game_id
+      where players.id in (f.lw_player_id, f.c_player_id, f.rw_player_id)
+        and not public.is_team_owner(g.team_id)
+    )
+    -- defense_line_slots.{ld,rd}_player_id (ON DELETE SET NULL): same
+    and not exists (
+      select 1 from public.defense_line_slots d
+      join public.games g on g.id = d.game_id
+      where players.id in (d.ld_player_id, d.rd_player_id)
+        and not public.is_team_owner(g.team_id)
     )
   );
 
