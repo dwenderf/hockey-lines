@@ -32,24 +32,31 @@
 -- Functions are not affected by the 2026-10-30 change (EXECUTE still defaults to PUBLIC); is_team_owner
 -- and get_display_name keep working as they do today.
 --
--- Idempotent and safe to re-run: every statement is a REVOKE/GRANT/ALTER DEFAULT PRIVILEGES.
+-- Idempotent and safe to re-run: every statement is a REVOKE/GRANT/ALTER DEFAULT PRIVILEGES. The body is
+-- one transaction (begin/commit), so the REVOKE ALL -> GRANT gap is never visible to other sessions and a
+-- failure rolls everything back.
 -- Never edit this file once applied; add a new migration instead.
 -- Not applied by the PR that adds it: run it by hand in the SQL editor, after 001-003.
 --
 
+begin;
 
 -- -------------------------------------------------------------
 -- 1. Default privileges: new objects in public are not exposed automatically
 -- -------------------------------------------------------------
--- These are the same two statements Supabase documents for opting out of auto-exposure (and what the
--- 2026-10-30 change does to existing projects, so on the hosted project they are no-ops once the
--- platform switch has happened). They make a scratch or older project behave like the new regime, so a
--- table that forgot its GRANT fails in development, not first in production.
+-- These follow the opt-out statements Supabase documents for auto-exposure (and what the 2026-10-30
+-- change does to existing projects, so on the hosted project they are largely no-ops once the platform
+-- switch has happened). They make a scratch or older project behave like the new regime, so a table
+-- that forgot its GRANT fails in development, not first in production.
+-- REVOKE ALL (not just select/insert/update/delete): an older project's default ACL also carries
+-- TRUNCATE, REFERENCES, TRIGGER and MAINTAIN, and TRUNCATE bypasses RLS, so future tables must not
+-- inherit them. Only objects created later by postgres are affected. Rollback: alter default
+-- privileges ... grant ...
 alter default privileges for role postgres in schema public
-  revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+  revoke all on tables from anon, authenticated, service_role;
 
 alter default privileges for role postgres in schema public
-  revoke usage, select on sequences from anon, authenticated, service_role;
+  revoke all on sequences from anon, authenticated, service_role;
 
 
 -- -------------------------------------------------------------
@@ -115,3 +122,5 @@ grant insert, update, delete on table public.leagues    to authenticated;  -- no
 -- app only reads them. system_admins is only ever written and read from the SQL editor. Neither gets
 -- any grant above, so the "owner write" policy on teams and the "self read" policy on system_admins
 -- are unreachable from the Data API until a future migration grants the matching privilege.
+
+commit;

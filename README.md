@@ -7,7 +7,7 @@ Build and manage hockey lines for your team. The captain drags and drops players
 ### 1. Supabase
 
 1. Create a new [Supabase](https://supabase.com) project with **Enable automatic RLS** turned on
-2. Run the migrations in the SQL editor, **in order**: paste each file in `supabase/migrations/` (`001_initial_schema.sql`, `002_…`, `003_…`, `004_…`, and any later ones) and run it before the next. See [Database migrations and grants](#database-migrations-and-grants) for why the order matters. Optionally run the read-only checks in `supabase/verification/` afterwards.
+2. Run the migrations in the SQL editor, **in order**: paste each file in `supabase/migrations/` (`001_initial_schema.sql`, `002_…`, `003_…`, `004_…`, and any later ones) and run it before the next. See [Database migrations and grants](#database-migrations-and-grants) for why the order matters. Optionally run the checks in `supabase/verification/` afterwards (they roll back, but two of them insert fixtures first; see below).
 3. Enable Realtime on the following tables: Database → Replication → Tables → enable `forward_line_slots`, `defense_line_slots`, `players`, and `game_absences`
 4. Set up Google OAuth:
    - In [Google Cloud Console](https://console.cloud.google.com): create a project → APIs & Services → Credentials → Create OAuth 2.0 Client ID (Web application)
@@ -64,7 +64,7 @@ Open [http://localhost:3000](http://localhost:3000) for the public view.
 
 ## Database migrations and grants
 
-Migrations in `supabase/migrations/` are applied by hand in the Supabase SQL editor (there is no CLI or CI step). Files are numbered and **must be run in numeric order**, each once; never edit an applied file, add a new one. `supabase/verification/` holds read-only checks (they roll back) for the matching migration.
+Migrations in `supabase/migrations/` are applied by hand in the Supabase SQL editor (there is no CLI or CI step). Files are numbered and **must be run in numeric order**, each once; never edit an applied file, add a new one. `supabase/verification/` holds checks for the matching migration. They are not read-only: `003_players_leagues_owner_writes.sql` and `004_api_grants_checks.sql` insert throwaway fixtures (teams, games, rosters and rows in `auth.users`) and then roll back, so nothing persists, but they do write inside that transaction. They have been run only on a local Postgres with stubbed `auth` and API roles, not against a real Supabase `auth.users`; try them on a scratch project first. `003_security_hardening_checks.sql` only reads, apart from a rolled-back role switch.
 
 **Rebuild order** (new project, scratch project, or restoring from this repo):
 
